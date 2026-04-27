@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { BRAND } from "@/lib/data";
+import Logo from "@/components/Logo";
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -12,6 +13,7 @@ export default function Footer() {
       <div className="relative mx-auto max-w-[1400px] px-5 md:px-10 py-20 md:py-28">
         <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-16">
           <div>
+            <Logo theme="dark" className="h-11 md:h-12 w-auto mb-8" testid="footer-logo" />
             <p className="text-[11px] uppercase tracking-[0.3em] text-[#ff5722] font-bold mb-6">
               Let's build something remarkable
             </p>

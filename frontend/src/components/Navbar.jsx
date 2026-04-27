@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { Menu, X, ArrowUpRight } from "lucide-react";
 import { BRAND } from "@/lib/data";
+import Logo from "@/components/Logo";
 
 const LINKS = [
   { to: "/", label: "Home" },
@@ -43,16 +44,7 @@ export default function Navbar() {
         }`}
       >
         <div className="mx-auto max-w-[1400px] px-5 md:px-10 h-[72px] flex items-center justify-between">
-          <Link to="/" data-testid="nav-logo-link" className="flex items-center gap-3 group">
-            <div className={`relative h-9 w-9 rounded-md flex items-center justify-center overflow-hidden ${isDarkRoute ? "bg-white" : "bg-[#0a0a0a]"}`}>
-              <span className={`font-display font-black text-lg leading-none ${isDarkRoute ? "text-black" : "text-white"}`}>R</span>
-              <span className="absolute -bottom-[2px] left-1/2 -translate-x-1/2 h-4 w-[2px] bg-[#ff5722]" />
-              <span className="absolute top-1 right-1 h-1 w-1 rounded-full bg-[#ff5722] animate-pulse-dot" />
-            </div>
-            <span className={`font-display font-black tracking-tight text-xl ${isDarkRoute ? "text-white" : "text-[#0a0a0a]"}`}>
-              reachvel
-            </span>
-          </Link>
+          <Logo theme={isDarkRoute ? "dark" : "light"} className="h-9 md:h-10 w-auto" testid="nav-logo-link" />
 
           <nav className="hidden lg:flex items-center gap-1">
             {LINKS.map((l) => (
@@ -107,12 +99,7 @@ export default function Navbar() {
         }`}
       >
         <div className="mx-auto max-w-[1400px] px-5 md:px-10 h-[72px] flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="relative h-9 w-9 rounded-md bg-white flex items-center justify-center">
-              <span className="text-black font-display font-black text-lg leading-none">R</span>
-            </div>
-            <span className="font-display font-black tracking-tight text-xl">reachvel</span>
-          </Link>
+          <Logo theme="dark" className="h-9 md:h-10 w-auto" testid="mobile-nav-logo" />
           <button
             data-testid="mobile-menu-close"
             className="h-10 w-10 rounded-full border border-white/15 flex items-center justify-center"

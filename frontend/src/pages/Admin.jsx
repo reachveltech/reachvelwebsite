@@ -6,6 +6,7 @@ import {
   ArrowUpRight, LogOut, Trash2, RefreshCw, Mail, Phone, Building2, Tag, Wallet,
   MessageSquare, Search, KeyRound, X,
 } from "lucide-react";
+import Logo from "@/components/Logo";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -163,11 +164,8 @@ export default function Admin() {
       <div data-testid="page-admin-login" className="min-h-screen bg-[#050505] text-white flex flex-col">
         <header className="px-5 md:px-10 py-5 border-b border-white/10 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
-            <div className="relative h-9 w-9 rounded-md bg-white flex items-center justify-center">
-              <span className="text-black font-display font-black text-lg leading-none">R</span>
-              <span className="absolute -bottom-[2px] left-1/2 -translate-x-1/2 h-4 w-[2px] bg-[#ff5722]" />
-            </div>
-            <span className="font-display font-black tracking-tight text-xl">reachvel <span className="text-[#ff5722]">/ admin</span></span>
+            <Logo theme="dark" className="h-9 md:h-10 w-auto" asLink={false} />
+            <span className="font-mono text-xs uppercase tracking-[0.2em] text-[#ff5722] pl-3 border-l border-white/20">admin</span>
           </Link>
           <Link to="/" className="text-sm text-white/60 hover:text-white link-underline" data-testid="admin-back-home">← Back to site</Link>
         </header>
@@ -213,11 +211,8 @@ export default function Admin() {
       <header className="sticky top-0 z-30 bg-white border-b border-black/10">
         <div className="mx-auto max-w-[1400px] px-5 md:px-10 py-4 flex items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-3">
-            <div className="relative h-9 w-9 rounded-md bg-[#0a0a0a] flex items-center justify-center">
-              <span className="text-white font-display font-black text-lg leading-none">R</span>
-              <span className="absolute -bottom-[2px] left-1/2 -translate-x-1/2 h-4 w-[2px] bg-[#ff5722]" />
-            </div>
-            <span className="font-display font-black tracking-tight text-xl">reachvel <span className="text-[#ff5722]">/ admin</span></span>
+            <Logo theme="light" className="h-9 md:h-10 w-auto" asLink={false} />
+            <span className="font-mono text-xs uppercase tracking-[0.2em] text-[#ff5722] pl-3 border-l border-black/15">admin</span>
           </Link>
           <div className="flex items-center gap-2">
             <button
