@@ -79,77 +79,112 @@ export function AboutAtom({ className = "" }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// ServicesAtom — "Periodic Lattice"
-// Seven disciplines arranged like a period in the periodic table.
-// Electron pulses travel left→right between them — services
-// cross-pollinate, never operate in isolation.
+// ServicesAtom — "AI-Centered Molecule"
+// A hexagonal benzene-style ring where AI sits at the nucleus and
+// the six service disciplines form the ring around it. Every outer
+// atom is double-bonded to its neighbours AND to AI — the message:
+// every service orbits a single AI core. Electrons travel around
+// the ring; packets pulse inward to the AI nucleus.
 // ─────────────────────────────────────────────────────────────
 export function ServicesAtom({ className = "" }) {
-  const atoms = [
-    { x: 90,  y: 300, sym: "W",  name: "Web" },
-    { x: 170, y: 300, sym: "M",  name: "Mobile" },
-    { x: 250, y: 300, sym: "AI", name: "AI", accent: true },
-    { x: 330, y: 300, sym: "EC", name: "Commerce" },
-    { x: 410, y: 300, sym: "AD", name: "Ads" },
-    { x: 490, y: 300, sym: "BR", name: "Brand" },
-    { x: 570, y: 300, sym: "DA", name: "Data" },
-  ];
+  const cx = 300, cy = 300, R = 170;
+  const outer = [
+    { sym: "W",  name: "Web"      },
+    { sym: "M",  name: "Mobile"   },
+    { sym: "EC", name: "Commerce" },
+    { sym: "AD", name: "Ads"      },
+    { sym: "BR", name: "Brand"    },
+    { sym: "DA", name: "Data"     },
+  ].map((s, i) => {
+    const a = (Math.PI / 3) * i - Math.PI / 2;
+    return { ...s, x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
+  });
+
   return (
-    <svg viewBox="0 0 660 600" className={className} aria-hidden="true">
+    <svg viewBox="0 0 600 600" className={className} aria-hidden="true">
       <defs>
-        <radialGradient id="svcNode" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#ff5722" />
+        <radialGradient id="svcCore" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#ff5722" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#ff5722" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="svcHalo" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#ff5722" stopOpacity="0.35" />
           <stop offset="100%" stopColor="#ff5722" stopOpacity="0" />
         </radialGradient>
       </defs>
 
-      {/* lattice rails */}
-      <g stroke="#ffffff" strokeOpacity="0.08" strokeWidth="1">
-        <line x1="60" y1="300" x2="600" y2="300" />
-        <line x1="60" y1="240" x2="600" y2="240" strokeDasharray="2 6" />
-        <line x1="60" y1="360" x2="600" y2="360" strokeDasharray="2 6" />
+      {/* outer orbital shell — electrons drifting around the whole molecule */}
+      <g style={{ transformOrigin: "300px 300px" }} className="animate-spin-slow">
+        <circle cx="300" cy="300" r="240" fill="none" stroke="#ffffff" strokeOpacity="0.08" strokeDasharray="2 6" />
+        <circle cx="540" cy="300" r="3" fill="#ff5722" />
+      </g>
+      <g style={{ transformOrigin: "300px 300px" }} className="animate-spin-reverse">
+        <circle cx="300" cy="300" r="210" fill="none" stroke="#ffffff" strokeOpacity="0.06" />
+        <circle cx="90" cy="300" r="2.5" fill="#ff5722" />
       </g>
 
-      {/* bonds between atoms — flowing energy */}
-      <g stroke="#ff5722" strokeOpacity="0.6" strokeWidth="1.2" fill="none">
-        {atoms.slice(0, -1).map((a, i) => (
-          <line
-            key={i}
-            x1={a.x}
-            y1="300"
-            x2={atoms[i + 1].x}
-            y2="300"
-            className="bond-flow"
-            style={{ animationDelay: `${-i * 0.25}s` }}
-          />
-        ))}
+      {/* ring bonds — between adjacent outer atoms (double-bond style) */}
+      <g stroke="#ffffff" strokeOpacity="0.25" strokeWidth="1" fill="none">
+        {outer.map((n, i) => {
+          const m = outer[(i + 1) % outer.length];
+          return <line key={i} x1={n.x} y1={n.y} x2={m.x} y2={m.y} />;
+        })}
+      </g>
+      <g stroke="#ff5722" strokeOpacity="0.55" strokeWidth="1.2" fill="none">
+        {outer.map((n, i) => {
+          const m = outer[(i + 1) % outer.length];
+          return (
+            <line key={i} x1={n.x} y1={n.y} x2={m.x} y2={m.y}
+              className="bond-flow" style={{ animationDelay: `${-i * 0.35}s` }} />
+          );
+        })}
       </g>
 
-      {/* traveling packet across the whole lattice */}
-      <circle r="4" fill="#ff5722">
-        <animateMotion
-          dur="5s"
-          repeatCount="indefinite"
-          path={`M${atoms[0].x},300 L${atoms[atoms.length - 1].x},300`}
-        />
-        <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
-          values="0;1;1;0" keyTimes="0;0.1;0.9;1" />
-      </circle>
+      {/* spokes — each service bonded to the AI nucleus */}
+      <g stroke="#ffffff" strokeOpacity="0.15" strokeWidth="1">
+        {outer.map((n, i) => <line key={i} x1={cx} y1={cy} x2={n.x} y2={n.y} />)}
+      </g>
 
-      {/* atoms */}
-      {atoms.map((a, i) => (
-        <g key={a.sym}>
-          <circle cx={a.x} cy="300" r="24" fill="url(#svcNode)" className="lattice-pulse"
-            style={{ animationDelay: `${-i * 0.35}s` }} />
-          <circle cx={a.x} cy="300" r="16" fill={a.accent ? "#ff5722" : "#ffffff"} fillOpacity={a.accent ? 1 : 0.92} />
-          <text x={a.x} y="304" fill={a.accent ? "#ffffff" : "#050505"} fontFamily="JetBrains Mono, monospace"
-            fontSize="11" fontWeight="700" textAnchor="middle">{a.sym}</text>
-          <text x={a.x} y="350" fill="#ffffff" opacity="0.55" fontFamily="JetBrains Mono, monospace"
-            fontSize="9" textAnchor="middle">{a.name}</text>
-          <text x={a.x} y="262" fill="#ff5722" opacity="0.6" fontFamily="JetBrains Mono, monospace"
-            fontSize="8" textAnchor="middle">S/0{i + 1}</text>
+      {/* data packets traveling inward along each spoke → AI */}
+      {outer.map((n, i) => (
+        <g key={i}>
+          <circle r="3" fill="#ff5722">
+            <animateMotion dur="3.2s" repeatCount="indefinite"
+              path={`M${n.x},${n.y} L${cx},${cy}`} begin={`${-i * 0.4}s`} />
+            <animate attributeName="opacity" dur="3.2s" repeatCount="indefinite"
+              values="0;1;1;0" keyTimes="0;0.15;0.85;1" begin={`${-i * 0.4}s`} />
+          </circle>
         </g>
       ))}
+
+      {/* AI nucleus — halo + breathing core */}
+      <circle cx={cx} cy={cy} r="60" fill="url(#svcHalo)" className="ai-halo" />
+      <g className="nucleus-core">
+        <circle cx={cx} cy={cy} r="34" fill="url(#svcCore)" />
+        <circle cx={cx} cy={cy} r="22" fill="#ff5722" />
+      </g>
+      <text x={cx} y={cy + 5} fill="#ffffff" fontFamily="Cabinet Grotesk, sans-serif"
+        fontSize="14" fontWeight="900" textAnchor="middle" letterSpacing="0.05em">AI</text>
+
+      {/* outer atoms */}
+      {outer.map((n, i) => (
+        <g key={n.sym} className="atom-breathe" style={{ animationDelay: `${-i * 0.6}s` }}>
+          <circle cx={n.x} cy={n.y} r="26" fill="#ffffff" fillOpacity="0.04" />
+          <circle cx={n.x} cy={n.y} r="18" fill="#ffffff" fillOpacity="0.92" />
+          <text x={n.x} y={n.y + 4} fill="#050505" fontFamily="JetBrains Mono, monospace"
+            fontSize="11" fontWeight="700" textAnchor="middle">{n.sym}</text>
+          <text x={n.x} y={n.y + 42} fill="#ffffff" opacity="0.55"
+            fontFamily="JetBrains Mono, monospace" fontSize="9" textAnchor="middle">{n.name}</text>
+          <text x={n.x} y={n.y - 28} fill="#ff5722" opacity="0.7"
+            fontFamily="JetBrains Mono, monospace" fontSize="8" textAnchor="middle">S/0{i + 1}</text>
+        </g>
+      ))}
+
+      {/* chemistry-style axis hints */}
+      <g fontFamily="JetBrains Mono, monospace" fontSize="9" fill="#ffffff" opacity="0.35">
+        <text x="20" y="30">C₆H₆ · the services molecule</text>
+        <text x="20" y="580">· AI at the nucleus · every service bonded</text>
+      </g>
     </svg>
   );
 }

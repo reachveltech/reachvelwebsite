@@ -14,6 +14,7 @@ import Careers from "@/pages/Careers";
 import Knowledge from "@/pages/Knowledge";
 import Article from "@/pages/Article";
 import Contact from "@/pages/Contact";
+import Admin from "@/pages/Admin";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -23,25 +24,36 @@ function ScrollToTop() {
   return null;
 }
 
+function Shell() {
+  const { pathname } = useLocation();
+  const isAdmin = pathname.startsWith("/admin");
+  return (
+    <>
+      <ScrollToTop />
+      {!isAdmin && <Navbar />}
+      <main>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/knowledge" element={<Knowledge />} />
+          <Route path="/knowledge/:slug" element={<Article />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/admin" element={<Admin />} />
+        </Routes>
+      </main>
+      {!isAdmin && <Footer />}
+    </>
+  );
+}
+
 function App() {
   return (
     <div className="App" data-testid="app-root">
       <BrowserRouter>
-        <ScrollToTop />
-        <Navbar />
-        <main>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/careers" element={<Careers />} />
-            <Route path="/knowledge" element={<Knowledge />} />
-            <Route path="/knowledge/:slug" element={<Article />} />
-            <Route path="/contact" element={<Contact />} />
-          </Routes>
-        </main>
-        <Footer />
+        <Shell />
         <Toaster
           position="bottom-right"
           toastOptions={{

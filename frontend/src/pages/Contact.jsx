@@ -1,9 +1,13 @@
 import { useState } from "react";
+import axios from "axios";
 import { ArrowUpRight, Mail, Phone, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import Reveal from "@/components/Reveal";
 import SectionLabel from "@/components/SectionLabel";
 import { BRAND } from "@/lib/data";
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const SERVICES = ["Web Engineering", "Mobile Applications", "AI Automation", "Commerce", "Brand", "Data", "Not sure yet"];
 const BUDGETS = ["< $50k", "$50k – $150k", "$150k – $500k", "$500k+"];
@@ -12,6 +16,7 @@ export default function Contact() {
   const [form, setForm] = useState({
     name: "",
     email: "",
+    phone: "",
     company: "",
     service: "",
     budget: "",
@@ -19,25 +24,36 @@ export default function Contact() {
   });
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const validate = () => {
     const e = {};
     if (!form.name.trim()) e.name = "Required";
     if (!/^\S+@\S+\.\S+$/.test(form.email)) e.email = "Valid email required";
+    if (form.phone && !/^[+\d\s().-]{7,20}$/.test(form.phone)) e.phone = "Enter a valid phone";
     if (!form.service) e.service = "Pick one";
     if (!form.note.trim() || form.note.length < 10) e.note = "Tell us a bit (10+ chars)";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (ev) => {
+  const handleSubmit = async (ev) => {
     ev.preventDefault();
     if (!validate()) {
       toast.error("Please fix the highlighted fields.");
       return;
     }
-    toast.success("Briefing received. A strategist will reply within 24 hours.");
-    setSubmitted(true);
+    try {
+      setSending(true);
+      await axios.post(`${API}/contact`, form);
+      toast.success("Briefing received. A strategist will reply within 24 hours.");
+      setSubmitted(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong. Please try again or email us directly.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -82,7 +98,7 @@ export default function Contact() {
                   data-testid="contact-reset"
                   onClick={() => {
                     setSubmitted(false);
-                    setForm({ name: "", email: "", company: "", service: "", budget: "", note: "" });
+                    setForm({ name: "", email: "", phone: "", company: "", service: "", budget: "", note: "" });
                   }}
                   className="mt-10 btn-ghost-light w-fit"
                 >
@@ -135,6 +151,18 @@ export default function Contact() {
                       className="mt-1 w-full bg-transparent border-b border-black/20 py-2 focus:outline-none focus:border-[#ff5722]"
                       placeholder="Company or team"
                     />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#4a4a4a]">Mobile number</label>
+                    <input
+                      data-testid="contact-phone"
+                      type="tel"
+                      value={form.phone}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                      className="mt-1 w-full bg-transparent border-b border-black/20 py-2 focus:outline-none focus:border-[#ff5722]"
+                      placeholder="+1 (415) 555-0199"
+                    />
+                    {errors.phone && <div className="text-xs text-[#ff5722] mt-1">{errors.phone}</div>}
                   </div>
 
                   <div className="md:col-span-2">
@@ -201,9 +229,10 @@ export default function Contact() {
                 <button
                   type="submit"
                   data-testid="contact-submit"
-                  className="btn-primary mt-10 w-full justify-center"
+                  disabled={sending}
+                  className="btn-primary mt-10 w-full justify-center disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Send briefing <ArrowUpRight className="h-4 w-4" />
+                  {sending ? "Sending…" : "Send briefing"} <ArrowUpRight className="h-4 w-4" />
                 </button>
                 <p className="mt-4 text-xs text-[#4a4a4a] text-center">
                   By submitting, you agree to our privacy policy. No spam, ever.
