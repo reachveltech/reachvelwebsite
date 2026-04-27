@@ -17,6 +17,8 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
 
+  const isDarkRoute = pathname === "/services" || pathname === "/projects";
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
@@ -34,18 +36,20 @@ export default function Navbar() {
         data-testid="site-navbar"
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           scrolled
-            ? "backdrop-blur-xl bg-[rgba(247,246,243,0.72)] border-b border-black/10"
+            ? isDarkRoute
+              ? "backdrop-blur-xl bg-[rgba(5,5,5,0.72)] border-b border-white/10"
+              : "backdrop-blur-xl bg-[rgba(247,246,243,0.72)] border-b border-black/10"
             : "bg-transparent"
         }`}
       >
         <div className="mx-auto max-w-[1400px] px-5 md:px-10 h-[72px] flex items-center justify-between">
           <Link to="/" data-testid="nav-logo-link" className="flex items-center gap-3 group">
-            <div className="relative h-9 w-9 rounded-md bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
-              <span className="text-white font-display font-black text-lg leading-none">R</span>
+            <div className={`relative h-9 w-9 rounded-md flex items-center justify-center overflow-hidden ${isDarkRoute ? "bg-white" : "bg-[#0a0a0a]"}`}>
+              <span className={`font-display font-black text-lg leading-none ${isDarkRoute ? "text-black" : "text-white"}`}>R</span>
               <span className="absolute -bottom-[2px] left-1/2 -translate-x-1/2 h-4 w-[2px] bg-[#ff5722]" />
               <span className="absolute top-1 right-1 h-1 w-1 rounded-full bg-[#ff5722] animate-pulse-dot" />
             </div>
-            <span className="font-display font-black tracking-tight text-xl text-[#0a0a0a]">
+            <span className={`font-display font-black tracking-tight text-xl ${isDarkRoute ? "text-white" : "text-[#0a0a0a]"}`}>
               reachvel
             </span>
           </Link>
@@ -58,10 +62,14 @@ export default function Navbar() {
                 end={l.to === "/"}
                 data-testid={`nav-link-${l.label.toLowerCase()}`}
                 className={({ isActive }) =>
-                  `px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 ${
-                    isActive
-                      ? "text-[#0a0a0a] bg-[#0a0a0a]/5"
-                      : "text-[#4a4a4a] hover:text-[#0a0a0a] hover:bg-[#0a0a0a]/5"
+                  `px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${
+                    isDarkRoute
+                      ? isActive
+                        ? "text-white bg-white/10"
+                        : "text-white/80 hover:text-white hover:bg-white/10"
+                      : isActive
+                        ? "text-[#0a0a0a] bg-[#0a0a0a]/[0.08]"
+                        : "text-[#0a0a0a]/80 hover:text-[#0a0a0a] hover:bg-[#0a0a0a]/[0.06]"
                   }`
                 }
               >
@@ -74,7 +82,7 @@ export default function Navbar() {
             <Link
               to="/contact"
               data-testid="nav-contact-cta"
-              className="btn-primary !py-[10px] !px-5 text-[12px]"
+              className={isDarkRoute ? "btn-ghost-light !py-[10px] !px-5 text-[12px]" : "btn-primary !py-[10px] !px-5 text-[12px]"}
             >
               Start a project <ArrowUpRight className="h-4 w-4" />
             </Link>
@@ -82,7 +90,7 @@ export default function Navbar() {
 
           <button
             data-testid="mobile-menu-toggle"
-            className="lg:hidden h-10 w-10 rounded-full border border-black/10 flex items-center justify-center"
+            className={`lg:hidden h-10 w-10 rounded-full border flex items-center justify-center ${isDarkRoute ? "border-white/20 text-white" : "border-black/10 text-[#0a0a0a]"}`}
             onClick={() => setOpen(true)}
             aria-label="Open menu"
           >
