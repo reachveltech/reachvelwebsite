@@ -1,0 +1,29 @@
+{
+  "summary": "End-to-end UI testing of the Reachvel marketing website (frontend-only, static content). Verified Home, About, Services, Projects (filter + modal + video), Careers (8 roles + apply modal validation + sonner toast), Knowledge (filter + search + article detail), Contact (validation + success state + reset), Footer (year 2026), Navbar links, Mobile (390px) hamburger overlay + nav + no horizontal overflow. All core flows pass.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "App.js ScrollToTop", "issue": "Uses window.location.pathname read at render-init instead of useLocation() from react-router. The pathname is captured once and never changes in the dep array, so the effect runs only on the first mount. Page does NOT scroll to top on subsequent client-side route changes.", "selector": "/app/frontend/src/App.js:18-24", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Fix ScrollToTop in /app/frontend/src/App.js to use `const { pathname } = useLocation();` from 'react-router-dom' so the effect re-runs on every route change.",
+    "Investigate the single 404 resource error logged on the home page load (likely a missing image / favicon / video asset). No impact to UX but should be cleaned up to keep the console error count at zero as targeted in the requirements."
+  ],
+  "critical_code_review_comments": [
+    "ScrollToTop hook is effectively dead — no scroll-to-top on SPA navigation (see App.js).",
+    "Knowledge page filter buttons use data-testid prefix `knowledge-filter-*` (good and unique). PRD copy mentioned `category-*`, but current naming is consistent and works.",
+    "Toast container is correctly mounted in App.js with the sonner Toaster; all forms use toast.success / toast.error appropriately.",
+    "Project modal stops event propagation correctly and the close button works; video element has autoPlay + muted + controls so it plays inline."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only)", "frontend": "~98%"},
+  "seed_data_creation": "None — purely static content from /app/frontend/src/lib/data.js",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Verified flows: Home hero CTAs (start→/contact, work→/projects); Projects 6 cards + Fintech filter (1 result) + modal with video + close; Careers 8 roles + apply modal validation + sonner success toast + modal close; Knowledge 5 cards + featured + 5 filters (knowledge-filter-all/ai/web/mobile/design) + search + article detail page; Contact empty-submit errors + valid-submit success state + reset; Navbar links to about/services/careers/knowledge work; Footer visible & contains 2026; Mobile 390px: hamburger toggle, overlay, mobile-nav-link-* navigates, no horizontal overflow on home/projects/contact. Console clean except 1 unrelated 404 on home.",
+  "rca of the issue": "ScrollToTop bug RCA: `function ScrollToTop() { const { pathname } = window.location; useEffect(() => { window.scrollTo(...) }, [pathname]); }` — `pathname` is destructured at component render time from window.location, so the value never changes between renders for a given mount. React's dep-array sees the same string and the effect only fires once, on the very first mount. Mitigation: replace with `import { useLocation } from 'react-router-dom'; const { pathname } = useLocation();` so the value updates on each route navigation."
+}
