@@ -6,11 +6,22 @@ import SectionLabel from "@/components/SectionLabel";
 import { SERVICES, STATS, PROJECTS, TESTIMONIALS, APPROACH } from "@/lib/data";
 
 function MoleculeArt() {
-  // SVG molecular lattice / orbital system — physics/chemistry metaphor
+  // Physics/chemistry metaphor — the "atomic synthesis" of Reachvel.
+  // Narrative of the animation:
+  //   • H₂O (raw data) enters at the top and flows downward through the lattice.
+  //   • Orbital shells rotate around the AI nucleus — opposite directions, like
+  //     real electron shells, to suggest stability under motion.
+  //   • Each outer atom (React, Swift, LLM, Node) gently "breathes" — bond
+  //     vibration at different phases, because every discipline has its own
+  //     resonance.
+  //   • Orange energy packets (electrons) travel along every bond toward
+  //     Reachvel at the bottom — ingredients being synthesized into product.
+  //   • Reachvel nucleus at the base emits expanding rings — the heartbeat of
+  //     delivery. Inputs are converted into outcomes.
   return (
     <svg
       viewBox="0 0 600 600"
-      className="absolute right-[-80px] top-1/2 -translate-y-1/2 h-[520px] w-[520px] lg:h-[640px] lg:w-[640px] opacity-90 pointer-events-none"
+      className="absolute right-[-80px] top-1/2 -translate-y-1/2 h-[520px] w-[520px] lg:h-[640px] lg:w-[640px] opacity-95 pointer-events-none"
       aria-hidden="true"
     >
       <defs>
@@ -18,48 +29,121 @@ function MoleculeArt() {
           <stop offset="0%" stopColor="#ff5722" />
           <stop offset="100%" stopColor="#ff5722" stopOpacity="0.15" />
         </radialGradient>
+        <radialGradient id="nucleusGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#ff5722" stopOpacity="0.35" />
+          <stop offset="70%" stopColor="#ff5722" stopOpacity="0.08" />
+          <stop offset="100%" stopColor="#ff5722" stopOpacity="0" />
+        </radialGradient>
       </defs>
-      <g className="animate-spin-slow" style={{ transformOrigin: "300px 300px" }}>
-        <circle cx="300" cy="300" r="240" fill="none" stroke="#0a0a0a" strokeOpacity="0.08" strokeDasharray="2 6" />
-        <circle cx="300" cy="300" r="180" fill="none" stroke="#0a0a0a" strokeOpacity="0.1" strokeDasharray="1 5" />
-        <circle cx="300" cy="300" r="120" fill="none" stroke="#0a0a0a" strokeOpacity="0.12" />
+
+      {/* Orbital shells — counter-rotating, anchored on AI nucleus at (300, 180) */}
+      <g style={{ transformOrigin: "300px 180px" }} className="animate-spin-slow">
+        <circle cx="300" cy="180" r="240" fill="none" stroke="#0a0a0a" strokeOpacity="0.06" strokeDasharray="2 6" />
+      </g>
+      <g style={{ transformOrigin: "300px 180px" }} className="animate-spin-reverse">
+        <circle cx="300" cy="180" r="180" fill="none" stroke="#0a0a0a" strokeOpacity="0.1" strokeDasharray="1 5" />
+      </g>
+      <g style={{ transformOrigin: "300px 180px" }} className="animate-spin-fast">
+        <circle cx="300" cy="180" r="120" fill="none" stroke="#0a0a0a" strokeOpacity="0.14" />
+        {/* Electrons orbiting the AI nucleus — intelligence continuously circulating */}
+        <circle cx="420" cy="180" r="3.5" fill="#ff5722" />
+        <circle cx="180" cy="180" r="2.5" fill="#ff5722" />
       </g>
 
-      {/* bond lines */}
-      <g stroke="#0a0a0a" strokeOpacity="0.25" strokeWidth="1">
-        <line x1="300" y1="60" x2="300" y2="180" />
+      {/* Bond lines — animated energy flowing toward Reachvel */}
+      <g stroke="#ff5722" strokeOpacity="0.35" strokeWidth="1" fill="none">
+        <line x1="300" y1="60"  x2="300" y2="180" className="bond-flow" />
+        <line x1="300" y1="180" x2="200" y2="250" className="bond-flow" style={{ animationDelay: "-0.2s" }} />
+        <line x1="300" y1="180" x2="400" y2="250" className="bond-flow" style={{ animationDelay: "-0.4s" }} />
+        <line x1="200" y1="250" x2="200" y2="370" className="bond-flow" style={{ animationDelay: "-0.6s" }} />
+        <line x1="400" y1="250" x2="400" y2="370" className="bond-flow" style={{ animationDelay: "-0.8s" }} />
+        <line x1="200" y1="370" x2="300" y2="440" className="bond-flow" style={{ animationDelay: "-1.0s" }} />
+        <line x1="400" y1="370" x2="300" y2="440" className="bond-flow" style={{ animationDelay: "-1.2s" }} />
+        <line x1="200" y1="370" x2="120" y2="430" stroke="#0a0a0a" strokeOpacity="0.2" />
+        <line x1="400" y1="370" x2="480" y2="430" stroke="#0a0a0a" strokeOpacity="0.2" />
+      </g>
+
+      {/* Static grey lines behind, for context */}
+      <g stroke="#0a0a0a" strokeOpacity="0.12" strokeWidth="1">
+        <line x1="300" y1="60"  x2="300" y2="180" />
         <line x1="300" y1="180" x2="200" y2="250" />
         <line x1="300" y1="180" x2="400" y2="250" />
         <line x1="200" y1="250" x2="200" y2="370" />
         <line x1="400" y1="250" x2="400" y2="370" />
         <line x1="200" y1="370" x2="300" y2="440" />
         <line x1="400" y1="370" x2="300" y2="440" />
-        <line x1="200" y1="370" x2="120" y2="430" />
-        <line x1="400" y1="370" x2="480" y2="430" />
       </g>
 
-      {/* nodes */}
+      {/* Data packets — orange electrons traveling along every bond toward Reachvel nucleus */}
       <g>
-        <circle cx="300" cy="60" r="8" fill="#0a0a0a" />
-        <circle cx="300" cy="180" r="14" fill="url(#node)" />
-        <circle cx="200" cy="250" r="8" fill="#0a0a0a" />
-        <circle cx="400" cy="250" r="10" fill="#0a0a0a" />
-        <circle cx="200" cy="370" r="12" fill="url(#node)" />
-        <circle cx="400" cy="370" r="8" fill="#0a0a0a" />
-        <circle cx="300" cy="440" r="16" fill="#0a0a0a" />
+        {[
+          { path: "M300,60 L300,180",    dur: "3.2s", delay: "0s" },
+          { path: "M300,180 L200,250",   dur: "2.6s", delay: "-0.6s" },
+          { path: "M300,180 L400,250",   dur: "2.6s", delay: "-1.1s" },
+          { path: "M200,250 L200,370",   dur: "2.8s", delay: "-0.3s" },
+          { path: "M400,250 L400,370",   dur: "2.8s", delay: "-1.3s" },
+          { path: "M200,370 L300,440",   dur: "2.4s", delay: "-0.8s" },
+          { path: "M400,370 L300,440",   dur: "2.4s", delay: "-1.6s" },
+        ].map((p, i) => (
+          <circle key={i} r="3.2" fill="#ff5722">
+            <animateMotion dur={p.dur} repeatCount="indefinite" path={p.path} begin={p.delay} />
+            <animate attributeName="opacity" dur={p.dur} repeatCount="indefinite" values="0;1;1;0" keyTimes="0;0.15;0.85;1" begin={p.delay} />
+          </circle>
+        ))}
+      </g>
+
+      {/* Outer atoms — vibrating with unique phase (bond resonance) */}
+      <g>
+        {/* H2O — raw data, top */}
+        <g className="atom-breathe" style={{ animationDelay: "-0.1s" }}>
+          <circle cx="300" cy="60" r="8" fill="#0a0a0a" />
+        </g>
+
+        {/* AI nucleus core — central hub with halo + breath */}
+        <circle cx="300" cy="180" r="34" fill="url(#nucleusGlow)" className="ai-halo" />
+        <g className="nucleus-core">
+          <circle cx="300" cy="180" r="14" fill="url(#node)" />
+          <circle cx="300" cy="180" r="6"  fill="#ff5722" />
+        </g>
+
+        {/* React / Swift — platforms */}
+        <g className="atom-breathe" style={{ animationDelay: "-0.8s" }}>
+          <circle cx="200" cy="250" r="8" fill="#0a0a0a" />
+        </g>
+        <g className="atom-breathe" style={{ animationDelay: "-1.4s" }}>
+          <circle cx="400" cy="250" r="10" fill="#0a0a0a" />
+        </g>
+
+        {/* LLM / Node — runtime intelligence */}
+        <g className="atom-breathe" style={{ animationDelay: "-2.0s" }}>
+          <circle cx="200" cy="370" r="12" fill="url(#node)" />
+        </g>
+        <g className="atom-breathe" style={{ animationDelay: "-2.6s" }}>
+          <circle cx="400" cy="370" r="8" fill="#0a0a0a" />
+        </g>
+
+        {/* Reachvel nucleus — the synthesized outcome, pulses as packets arrive */}
+        <circle cx="300" cy="440" r="16" fill="none" stroke="#ff5722" strokeOpacity="0.4" className="nucleus-ring" />
+        <circle cx="300" cy="440" r="16" fill="none" stroke="#ff5722" strokeOpacity="0.4" className="nucleus-ring" style={{ animationDelay: "-1.3s" }} />
+        <g className="nucleus-core" style={{ animationDuration: "2.4s" }}>
+          <circle cx="300" cy="440" r="16" fill="#0a0a0a" />
+          <circle cx="300" cy="440" r="5"  fill="#ff5722" />
+        </g>
+
+        {/* Output atoms — side surfaces, static orange */}
         <circle cx="120" cy="430" r="6" fill="#ff5722" />
         <circle cx="480" cy="430" r="6" fill="#ff5722" />
       </g>
 
-      {/* floating labels */}
-      <g fontFamily="JetBrains Mono, monospace" fontSize="10" fill="#0a0a0a" opacity="0.45">
+      {/* Floating labels */}
+      <g fontFamily="JetBrains Mono, monospace" fontSize="10" fill="#0a0a0a" opacity="0.5">
         <text x="315" y="55">H₂O</text>
-        <text x="315" y="180">AI</text>
+        <text x="320" y="184">AI</text>
         <text x="215" y="250">React</text>
         <text x="415" y="250">Swift</text>
         <text x="215" y="365">LLM</text>
         <text x="410" y="365">Node</text>
-        <text x="315" y="445">Reachvel</text>
+        <text x="318" y="448" fontWeight="700" fill="#ff5722" opacity="1">Reachvel</text>
       </g>
     </svg>
   );

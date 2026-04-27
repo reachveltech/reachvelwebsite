@@ -102,6 +102,56 @@ code, .mono {
 }
 .animate-spin-slow { animation: spin-slow 40s linear infinite; }
 
+@keyframes spin-reverse {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0); }
+}
+.animate-spin-reverse { animation: spin-reverse 28s linear infinite; }
+
+@keyframes spin-fast {
+    from { transform: rotate(0); }
+    to { transform: rotate(360deg); }
+}
+.animate-spin-fast { animation: spin-fast 14s linear infinite; }
+
+/* atomic bond vibration — subtle breathing, phased */
+@keyframes atom-breathe {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50%      { transform: translate(0, -3px) scale(1.06); }
+}
+.atom-breathe { animation: atom-breathe 4.5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+
+/* nucleus pulse ring */
+@keyframes nucleus-pulse-ring {
+    0%   { r: 16; opacity: 0.55; }
+    100% { r: 48; opacity: 0; }
+}
+.nucleus-ring { animation: nucleus-pulse-ring 2.6s ease-out infinite; transform-origin: center; }
+
+/* nucleus core breath */
+@keyframes nucleus-core {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.08); }
+}
+.nucleus-core { animation: nucleus-core 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+
+/* bond energy pulse (stroke dash slide) */
+@keyframes bond-flow {
+    0%   { stroke-dashoffset: 80; }
+    100% { stroke-dashoffset: 0; }
+}
+.bond-flow {
+    stroke-dasharray: 6 8;
+    animation: bond-flow 2.4s linear infinite;
+}
+
+/* AI halo */
+@keyframes ai-halo {
+    0%, 100% { opacity: 0.35; transform: scale(1); }
+    50%      { opacity: 0.9;  transform: scale(1.25); }
+}
+.ai-halo { animation: ai-halo 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+
 /* pulse-dot */
 @keyframes pulse-dot {
     0%, 100% { opacity: 1; transform: scale(1); }
