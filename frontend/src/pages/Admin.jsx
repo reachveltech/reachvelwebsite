@@ -263,7 +263,7 @@ export default function Admin() {
         </div>
 
         {/* status cards */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-px bg-black/10 border border-black/10 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-px bg-black/10 border border-black/10 mb-8">
           <Stat label="Total" value={stats.total} />
           <Stat label="Today" value={stats.today} />
           {STATUSES.map((s) => (

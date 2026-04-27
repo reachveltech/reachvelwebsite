@@ -19,25 +19,23 @@ Build a super premium, highly technical website for Reachvel — an AI-powered W
 - Motion: custom IntersectionObserver `<Reveal>` component, CSS marquee/orbit/float
 
 ## What's Been Implemented (Dec 2025)
-- Navbar: glassmorphic sticky, theme-aware (light/dark per route), desktop + mobile overlay hamburger menu
+- Navbar: glassmorphic sticky, theme-aware, desktop + mobile overlay menu
 - Footer: 3 offices, nav/social links, live-status ticker
-- Home: hero (physics/molecule SVG with orbitals, electron flow, data packets, pulsing Reachvel nucleus), ticker strip, clients marquee, services preview 3×3 bento, stats (tetris grid), projects snippet (4 asymmetric), approach 4-step, testimonials 3 cards, orange CTA strip
-- About: hero (4-atom "studio compound" with shared orbital), mission split, 4 values grid, dark stats band, leadership 4-card grid, CTA
-- Services: dark theme, hero (**hexagonal benzene-style molecule — AI nucleus with 6 service atoms bonded around it**), 7 discipline rows with stack chips, engagement tiers, CTA
-- Projects: hero (trajectory field — 5 momentum paths with flying particles), filter bar, 6 asymmetric bento cards, modal with mp4 video + metrics
-- Careers: hero (hex nucleation lattice — team growing from a seed, some dashed "open role" nodes), culture mosaic, 6 benefits grid, 8 open roles with apply modal
-- Knowledge: hero (wave-interference visual — 3 sine waves with pulsing interference nodes), featured article, category + search filters, article detail with drop-cap + related
-- Contact: hero + **validated briefing form including mobile number**, service/budget chip selectors, POST → **real backend** `/api/contact`, success state + sonner toast, 3 office cards + direct channels rail
-- **Admin Dashboard (`/admin`)** — password gate using single shared-secret from `ADMIN_PASSWORD` env; listing of all briefings with stats cards (total / today / with-phone / services), row-click detail modal (email/phone/company/service/budget/note), delete, refresh, sign-out. Navbar/Footer hidden on admin pages.
-- Backend `/api/contact` persists to Mongo `contact_submissions` collection; `/api/admin/*` endpoints gated by `X-Admin-Token` header
-- ScrollToTop on route change
-- All interactive elements have unique `data-testid` attributes
-- 100% mobile responsive
+- Home + page-specific atomic visuals (Home molecule, About compound, Services benzene ring, Projects trajectory field, Careers nucleation lattice, Knowledge wave interference)
+- Contact: phone field + POST to real backend `/api/contact` (persisted in Mongo `contact_submissions`)
+- **Hardened Admin (`/admin`)**:
+  - Bcrypt-hashed password stored in Mongo `admin_config` (seeded from `backend/.env → ADMIN_PASSWORD`)
+  - Random opaque session tokens in `admin_sessions` (24h TTL), returned on `POST /api/admin/login`, sent via `X-Admin-Token` header
+  - **IP-based rate limit**: 5 failed attempts / 5 min → 15 min lockout (429). Successful login clears failure history.
+  - `POST /api/admin/rotate-password` — validates current password, invalidates all other sessions
+  - Submission **status lifecycle**: new → reviewing → contacted → won/lost (`PATCH /api/admin/submissions/{id}`)
+  - Admin dashboard: **S.No column**, **server-side search** (`?q=`), **status filter chips** (`?status=`), per-row status dropdown, change-password modal, 7-card stat strip (Total / Today / by status)
+- Brand contact: `info@reachvel.com` / `+91 91214 77 117` (applied site-wide via `BRAND` constant)
 
 ## Testing
-- Iteration 1: 98% pass → ScrollToTop bug fixed
-- **Iteration 2: 100% pass (16/16 backend, 100% frontend flows)** — contact + admin dashboard verified end-to-end
-- Admin credentials at `/app/memory/test_credentials.md`
+- Iteration 1 (static pages) — 98% → bug fixed
+- Iteration 2 (contact + initial admin) — 100% (16/16)
+- **Iteration 3 (hardened auth + status + search + filter) — 100% (22/22 backend + all frontend flows)**
 
 ## P0/P1/P2 Backlog (next phases)
 - P1: Real project video assets + richer case-study detail pages (dedicated /projects/:slug)
