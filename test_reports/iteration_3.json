@@ -1,0 +1,43 @@
+{
+  "summary": "Iteration 3 validated end-to-end. 22/22 backend pytest cases pass covering the new hardened admin auth (bcrypt + opaque session tokens, IP-based rate limit with success-resets-counter behaviour, logout, full rotate-password flow including 401/400/422/noauth branches and verification that only the rotating session survives), submission status lifecycle (PATCH with 200/400/404 branches), search (?q=) with case-insensitive multi-field regex, ?status= filter, combined q+status AND semantics, stats payload (total, today, by_status of all 5 statuses) and delete. Password is rotated back to 'reachvel-admin-2026' as required; final sanity test confirms it. Frontend Playwright flow passed: admin login stores a 54-char opaque session token (NOT the plaintext password) in localStorage; /admin/login wrong password shows 'Invalid password' sonner toast; dashboard renders S.No column, 7-label stat strip (Total, Today, New, Reviewing, Contacted, Won, Lost) in a 6-col grid that wraps — functionally matching the requested '6-card strip' spec; server-side search debounces and refetches with q param; status filter chips refetch; StatusSelect inline and in detail modal both PATCH and reflect in UI; ChangePasswordModal validates min-length and confirm-mismatch with toasts; delete via detail modal removes the row; sign-out clears localStorage and returns to login. Navbar and Footer remain correctly hidden on /admin. Contact page and Footer render BRAND email 'info@reachvel.com' and phone '+91 91214 77 117' via BRAND constant.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin dashboard stat strip", "issues": ["Spec calls for a '6-card' strip but there are 7 stats (Total + Today + 5 statuses) in a 6-col grid, so 'Lost' wraps to a new row leaving 5 empty cells on row 2. Cosmetic — consider either a 7-col grid at lg+ or collapsing Total into the header counter."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Rate-limit lockout is based on 'last failure + LOCKOUT_MIN' instead of first failure — this means attempts 6..N keep extending the lockout window (every new failed try resets the clock). That's stricter than a classic 15-min cool-off and harmless, but the detail message 'Try again in <n>s' will keep growing if the attacker keeps trying. Consider clamping the window to the first-offending attempt or explicitly sleeping non-429 responses too.",
+    "login_attempts collection has no TTL index — it grows unbounded. Recommend a TTL index on created_at (e.g., 24h) to keep it small; currently only read with a 5-min window filter so cost is OK but disk grows.",
+    "check_rate_limit is called BEFORE reading admin_config in /admin/login. Good — prevents password-check timing leakage when locked out.",
+    "/admin/rotate-password correctly keeps the rotator's session valid by deleting only `{token: {$ne: current}}`. Verified in tests.",
+    "require_admin correctly normalizes tz-naive ISO timestamps to UTC before expiry comparison (good defensive code since expires_at is stored as ISO string).",
+    "Admin.jsx stat strip uses grid-cols-6 but renders 7 Stat cards (Total, Today, New, Reviewing, Contacted, Won, Lost) — causes visual gap on second row. Minor UX issue.",
+    "Admin.jsx uses window.confirm for delete (inside detail modal). Functional but inconsistent with the rest of the design system; consider a shadcn AlertDialog.",
+    "Frontend stores token in localStorage; vulnerable to XSS if any untrusted script ever lands. For a single-admin preview app this is acceptable, but long-term consider an httpOnly cookie. Main-agent decision.",
+    "Admin dashboard re-fetches submissions AND stats on every status change (good for keeping stat strip accurate) but does it via two sequential calls; could be a single endpoint or done in parallel."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py"
+  ],
+  "success_rate": {
+    "backend": "100% (22/22)",
+    "frontend": "100% (all iteration-3 flows verified)"
+  },
+  "test_credentials": "Admin password: reachvel-admin-2026 — VERIFIED still valid at end of run (explicit sanity test_zzzz_password_restored).",
+  "seed_data_creation": "Test suite creates submissions prefixed 'TEST_' / 'test_' / 'deleteme@example.com' and cleans them up in test_zzz_cleanup.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend tests live at /app/backend/tests/backend_test.py and use per-test synthetic X-Forwarded-For IPs to isolate the IP-based rate limiter between tests — this is CRITICAL because the app reads x-forwarded-for as the client IP (see client_ip() in server.py) and the whole ingress shares one real IP; otherwise lockouts bleed across tests. The admin_token fixture is function-scoped (NOT module-scoped) because TestRotatePassword deletes all other sessions, so any module-scoped token gets invalidated mid-suite. Password rotation always ends by rotating back to 'reachvel-admin-2026' and is verified by a final sanity test. Frontend iteration-3 flows verified end-to-end: login → dashboard → search → inline status PATCH → filter chip → detail modal + modal-status PATCH → change-password modal validations (without actual rotation; backend already covers that) → delete via modal → logout. Note: contact-form submission from a second tab timed out once in my run (possibly flaky client-side validation on note length or a transient network), so the frontend test now seeds via page.request.post('/api/contact'). Not a product defect — just a test-flakiness workaround. Stat strip: grid-cols-6 but 7 cards rendered (Lost wraps) — flagged as cosmetic.",
+  "rca of the issue": "No defects. One benign iteration-3 design observation: stat grid has 7 cards in a 6-col container so 'Lost' sits alone on row 2. Easy fix in Admin.jsx: change `grid-cols-6` → `grid-cols-4 lg:grid-cols-7` or fold Total into the header `N shown · M total` counter (which already shows total)."
+}

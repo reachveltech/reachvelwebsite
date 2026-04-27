@@ -3,8 +3,8 @@ export const BRAND = {
   name: "Reachvel",
   tagline: "AI-powered engineering for the world's most ambitious products.",
   logo: "https://customer-assets.emergentagent.com/job_d1703749-287a-4c8e-a034-6870e45cde56/artifacts/wopxaf1q_reachvel%20logo.JPG",
-  email: "hello@reachvel.com",
-  phone: "+1 (415) 555-0199",
+  email: "info@reachvel.com",
+  phone: "+91 91214 77 117",
   address: "One Market Plaza, Suite 3600, San Francisco, CA 94105",
   offices: [
     { city: "San Francisco", line1: "One Market Plaza, Suite 3600", line2: "CA 94105, United States", timezone: "PST" },
