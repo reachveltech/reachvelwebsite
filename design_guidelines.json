@@ -1,0 +1,198 @@
+{
+  "theme_and_archetype": {
+    "domain": "Creative Tech Agency / Corporate Consulting",
+    "theme": "hybrid",
+    "archetype": "Swiss & High-Contrast (Archetype 4) infused with Jewel & Luxury (Archetype 5)",
+    "metaphor_and_mood": "Physics and chemistry dynamics. Think molecular lattices, particle systems, orbital rings, vector fields, and oscilloscope waves. The vibe is Accenture/Infosys level scale but with the editorial, cinematic luxury of Lumina Design and The Finch. It must feel highly technical, intelligent, and premium."
+  },
+  "typography": {
+    "anti_pattern_check": "Inter, Space Grotesk, Roboto, and Open Sans are strictly forbidden.",
+    "headings": {
+      "font_family": "Cabinet Grotesk, sans-serif",
+      "style": "Highly geometric, striking, bold, variable weights. Tracking MUST be tight (tracking-tight or tracking-tighter).",
+      "h1": "text-4xl sm:text-5xl lg:text-6xl font-black tracking-tighter leading-none",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight",
+      "h3": "text-xl sm:text-2xl font-bold tracking-tight"
+    },
+    "body": {
+      "font_family": "Outfit, sans-serif",
+      "style": "Clean, highly legible geometric sans with technical undertones.",
+      "large": "text-lg sm:text-xl font-light leading-relaxed",
+      "base": "text-base font-normal leading-relaxed text-muted-foreground",
+      "small": "text-sm font-medium tracking-wide"
+    },
+    "labels_and_overlines": {
+      "style": "uppercase text-xs font-bold tracking-[0.2em] text-orange-500"
+    }
+  },
+  "color_system": {
+    "brand_accent": "#FF5722",
+    "light_mode": {
+      "background": "#F9F9F9",
+      "surface": "#FFFFFF",
+      "text_primary": "#0A0A0A",
+      "text_secondary": "#4A4A4A",
+      "border": "#E5E5E5",
+      "accent_glow": "rgba(255, 87, 34, 0.1)"
+    },
+    "dark_mode": {
+      "background": "#050505",
+      "surface": "#0F0F0F",
+      "text_primary": "#FFFFFF",
+      "text_secondary": "#A0A0A0",
+      "border": "#1A1A1A",
+      "accent_glow": "rgba(255, 87, 34, 0.2)"
+    },
+    "gradients": {
+      "accent_gradient": "bg-gradient-to-r from-[#FF5722] to-[#FF8A65]",
+      "surface_gradient_dark": "bg-gradient-to-b from-[#0F0F0F] to-[#050505]"
+    },
+    "usage_rules": "Use sections to create harsh contrast. Home Hero should be Light Mode (high-key photography). The Services and Projects showcase MUST switch to Deep Obsidian Dark Mode to make the case studies pop like cinema screens."
+  },
+  "layout_and_spacing": {
+    "spacing_scale": "Use generous, luxurious padding: py-24, py-32 for sections. Containers should use max-w-7xl by default, but hero sections can break the grid.",
+    "grids": "Use 'MODE A: THE TETRIS GRID' for portfolios and case studies. Heavy asymmetry. Span rows and columns unpredictably (col-span-8, col-span-4).",
+    "borders": "Expose the skeleton in technical sections using Grid Borders (border-collapse, border-r, border-b with subtle border/40 colors)."
+  },
+  "motion_and_interactions": {
+    "scroll": "MANDATORY: Use Lenis for smooth scrolling to give the site momentum and weight.",
+    "hover_states": "Interactive elements must have a subtle scale (-translate-y-1) and an explicit color change. Buttons should feature an inner gradient shift.",
+    "micro_interactions": "Draw inspiration from physics: magnetic buttons (Framer Motion), trailing cursors with particle effects, and orbital hover states for service cards."
+  },
+  "component_rules": {
+    "testing": "All interactive elements (buttons, links, forms) MUST have data-testid attributes (e.g., data-testid='hero-cta-button').",
+    "buttons": "Do not use standard Shadcn buttons untouched. Customize them to be cardless or completely rounded, featuring a 1px border and a subtle internal glow.",
+    "forms": "Use Shadcn Form, Input, and Select. Apply 'Glassmorphism' (backdrop-blur-xl bg-white/70) for the contact form.",
+    "cards": "Avoid standard cards. Use flat rectangles with sharp edges or maximum 8px radius. Use the 'Tracing Beam' effect for high-tier service highlights.",
+    "navigation": "Sticky, glassmorphic header (backdrop-blur-xl bg-white/70 or bg-black/60). MUST have a visible nav on desktop, no hamburger until mobile.",
+    "icons": "Use Phosphor Icons (@phosphor-icons/react) with Duotone weight for a premium technical look."
+  },
+  "media_and_assets": {
+    "brand_logo": "https://customer-assets.emergentagent.com/job_d1703749-287a-4c8e-a034-6870e45cde56/artifacts/wopxaf1q_reachvel%20logo.JPG",
+    "image_urls": {
+      "hero_light_abstract": {
+        "url": "https://static.prod-images.emergentagent.com/jobs/d1703749-287a-4c8e-a034-6870e45cde56/images/490e3120133f403efeaf451b6ab0928c03333d956f1c1d68c7a5a4cf7f24c81b.png",
+        "description": "Abstract minimalist white background with 3D molecular lattice, high key photography.",
+        "usage": "Background for the light-themed Home page Hero section."
+      },
+      "services_dark_particles": {
+        "url": "https://static.prod-images.emergentagent.com/jobs/d1703749-287a-4c8e-a034-6870e45cde56/images/f54b397294cc2fc705793c7b6cfd961a082def937acec569464aa5323154aef4.png",
+        "description": "Deep obsidian dark background with glowing electric orange particle system.",
+        "usage": "Background for the dark-themed Services / AI capabilities section."
+      },
+      "ai_backbone_concept": {
+        "url": "https://static.prod-images.emergentagent.com/jobs/d1703749-287a-4c8e-a034-6870e45cde56/images/df852b154d9ec57e026146f3f3bace4b34c7770f75a8f74c178f3b3ed709b2bf.png",
+        "description": "Geometric neural network intersecting with chemical bonds.",
+        "usage": "Visual for the 'Approach' or 'Why Reachvel' knowledge center/about section."
+      },
+      "project_fintech": {
+        "url": "https://images.unsplash.com/photo-1723785735443-16ffd373f398?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA0MTJ8MHwxfHNlYXJjaHwzfHxmaW50ZWNoJTIwZGFzaGJvYXJkJTIwYXBwJTIwaW50ZXJmYWNlJTIwbW9kZXJufGVufDB8fHx8MTc3NzI5MjA0OHww&ixlib=rb-4.1.0&q=85",
+        "description": "Modern fintech mobile app interface.",
+        "usage": "Projects Showcase - Fintech Case Study."
+      },
+      "project_data_analytics": {
+        "url": "https://images.pexels.com/photos/32299899/pexels-photo-32299899.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Workspace with screens displaying market data.",
+        "usage": "Projects Showcase - Data Analytics Case Study."
+      },
+      "project_healthcare": {
+        "url": "https://images.unsplash.com/photo-1633098096956-afdc8bcc8552?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDV8MHwxfHNlYXJjaHwyfHxoZWFsdGhjYXJlJTIwdGVjaG5vbG9neSUyMGFic3RyYWN0JTIwc2NyZWVufGVufDB8fHx8MTc3NzI5MjA0N3ww&ixlib=rb-4.1.0&q=85",
+        "description": "Abstract healthcare technology screen.",
+        "usage": "Projects Showcase - Healthcare Case Study."
+      },
+      "careers_team_1": {
+        "url": "https://images.unsplash.com/photo-1758691737387-a89bb8adf768?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzN8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjB0ZWNoJTIwdGVhbSUyMG9mZmljZSUyMGRpdmVyc2V8ZW58MHx8fHwxNzc3MjkyMDQ3fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Colleagues taking selfie in modern office.",
+        "usage": "Careers Page - Culture / Team section."
+      },
+      "careers_team_2": {
+        "url": "https://images.pexels.com/photos/12902874/pexels-photo-12902874.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Professionals collaborating in modern office.",
+        "usage": "Careers Page - Culture / Working Environment."
+      },
+      "client_logo_placeholders": [
+        "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
+        "https://upload.wikimedia.org/wikipedia/commons/a/a0/Wipro_Primary_Logo_Color_RGB.svg",
+        "https://upload.wikimedia.org/wikipedia/commons/9/95/Infosys_logo.svg",
+        "https://upload.wikimedia.org/wikipedia/commons/c/cd/Accenture.svg"
+      ]
+    }
+  },
+  "page_compositions": {
+    "Home": {
+      "theme": "Light to Dark Transition",
+      "structure": [
+        "Hero: Light theme, full height. High-impact typography overlaying the 'hero_light_abstract' image (bg-white/40 glass overlay). Title: 'AI Powered Future Ready Solutions'.",
+        "Marquee: Client logos in grayscale, extremely slow drift.",
+        "Services Preview: Transition to DARK THEME. Use bento grid layout with 'services_dark_particles' as section background. Highlight Web, Mobile, AI.",
+        "Stats: Grid borders, giant numbers (e.g. 1M+ Lines of Code), small uppercase labels.",
+        "Projects Snippet: Kinetic hover-reveal cards linking to case studies.",
+        "Testimonials: Asymmetrical cards, editorial typography."
+      ]
+    },
+    "About": {
+      "theme": "Light",
+      "structure": [
+        "Hero: Split layout, large editorial typography for the mission statement.",
+        "Values: Grid-based layout showcasing 'Physics of Dynamics' in business.",
+        "Leadership/Team: Use 'careers_team_2' image. Clean, structured portrait layout."
+      ]
+    },
+    "Services": {
+      "theme": "Dark",
+      "structure": [
+        "Hero: Deep obsidian with orange accents. 'Technology-Driven Solutions for Modern Business'.",
+        "Detail Sections: Utilize the 'tracing beam' effect on service cards (Web, Mobile, AI, E-Commerce, Ad, Strategy, Data). Heavy use of icons (Phosphor) and orbital micro-interactions."
+      ]
+    },
+    "Projects": {
+      "theme": "Dark",
+      "structure": [
+        "Filterable Grid: Domain filters (Fintech, Healthcare, Retail).",
+        "Showcase: Large, asymmetric bento layout. Use 'project_fintech', 'project_data_analytics', 'project_healthcare'.",
+        "Hover Interactions: Images should scale inside their containers; reveal case study narrative on hover."
+      ]
+    },
+    "Careers": {
+      "theme": "Light",
+      "structure": [
+        "Culture Section: Masonry grid of team images ('careers_team_1').",
+        "Roles List: Clean accordion or table layout for open positions.",
+        "CTA: Static UI form 'Apply Now' embedded with a glassmorphism card."
+      ]
+    },
+    "Knowledge_Center": {
+      "theme": "Light",
+      "structure": [
+        "Grid: Articles layout with tags (AI, Web, Mobile).",
+        "Detail Page Layout: narrow reading column (max-w-2xl or max-w-3xl), large serif drop-caps if possible, elegant typography."
+      ]
+    },
+    "Contact_Us": {
+      "theme": "Hybrid (Dark Form, Light Map/Info)",
+      "structure": [
+        "Form: Validated UI form with toast confirmation. Embedded inside a Neumorphic or Glassmorphic container.",
+        "Office Info: Clean list of addresses, email, and phone with a minimalist map aesthetic."
+      ]
+    }
+  },
+  "mobile_responsive_rules": {
+    "images": "All hero images and modals must have max-h-[80vh] md:max-h-none.",
+    "typography": "Use fluid typography or strict breakpoints (text-4xl to text-6xl ceiling). Never center everything on mobile just because it's mobile; maintain left alignment for readability.",
+    "navigation": "Hamburger menu exclusively for mobile viewports. Full-screen overlay menu with massive text links."
+  },
+  "dos_and_donts": {
+    "dos": [
+      "Use pure HTML + Tailwind for creative marketing layouts instead of rigid Shadcn section components.",
+      "Customize Shadcn forms and inputs heavily to match the brand.",
+      "Incorporate the color #FF5722 intentionally as an accent, not a dominant background.",
+      "Use data-testid on every clickable element."
+    ],
+    "donts": [
+      "DO NOT use a fully transparent header over images; use backdrop-blur.",
+      "DO NOT use Inter or Space Grotesk fonts.",
+      "DO NOT use standard Bootstrap-style equal columns. Force asymmetry.",
+      "DO NOT use placeholder image URLs like via.placeholder.com. Only use the provided asset URLs."
+    ]
+  }
+}
