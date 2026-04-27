@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
 import { useEffect } from "react";
 import "@/App.css";
@@ -16,7 +16,7 @@ import Article from "@/pages/Article";
 import Contact from "@/pages/Contact";
 
 function ScrollToTop() {
-  const { pathname } = window.location;
+  const { pathname } = useLocation();
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [pathname]);
