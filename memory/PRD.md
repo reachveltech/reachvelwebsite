@@ -19,22 +19,25 @@ Build a super premium, highly technical website for Reachvel — an AI-powered W
 - Motion: custom IntersectionObserver `<Reveal>` component, CSS marquee/orbit/float
 
 ## What's Been Implemented (Dec 2025)
-- Navbar: glassmorphic sticky, desktop + mobile overlay hamburger menu
+- Navbar: glassmorphic sticky, theme-aware (light/dark per route), desktop + mobile overlay hamburger menu
 - Footer: 3 offices, nav/social links, live-status ticker
-- Home: hero (physics/molecule SVG), ticker strip, clients marquee, services preview 3×3 bento, stats (tetris grid), projects snippet (4 asymmetric), approach 4-step, testimonials 3 cards, orange CTA strip
-- About: hero, mission split, 4 values grid, dark stats band, leadership 4-card grid, CTA
-- Services: dark theme, 7 discipline rows with stack chips, engagement tiers (Sprint/Engagement/Studio), CTA
-- Projects: filter bar (All/Fintech/Healthcare/Retail/Data/AI), 6 asymmetric bento cards with metrics, project modal with mp4 video + metrics + services chips
-- Careers: hero, culture 3-image mosaic, 6 benefits grid, 8 open roles with role-level Apply modal (validated form + sonner toast)
-- Knowledge: featured article, category + search filters, 6 articles, detail page with drop-cap body + related
-- Contact: validated briefing form (service + budget chips, name/email/company/note), submit → sonner toast + success state + reset, 3 office cards + direct channels rail
-- ScrollToTop on route change (via useLocation)
+- Home: hero (physics/molecule SVG with orbitals, electron flow, data packets, pulsing Reachvel nucleus), ticker strip, clients marquee, services preview 3×3 bento, stats (tetris grid), projects snippet (4 asymmetric), approach 4-step, testimonials 3 cards, orange CTA strip
+- About: hero (4-atom "studio compound" with shared orbital), mission split, 4 values grid, dark stats band, leadership 4-card grid, CTA
+- Services: dark theme, hero (**hexagonal benzene-style molecule — AI nucleus with 6 service atoms bonded around it**), 7 discipline rows with stack chips, engagement tiers, CTA
+- Projects: hero (trajectory field — 5 momentum paths with flying particles), filter bar, 6 asymmetric bento cards, modal with mp4 video + metrics
+- Careers: hero (hex nucleation lattice — team growing from a seed, some dashed "open role" nodes), culture mosaic, 6 benefits grid, 8 open roles with apply modal
+- Knowledge: hero (wave-interference visual — 3 sine waves with pulsing interference nodes), featured article, category + search filters, article detail with drop-cap + related
+- Contact: hero + **validated briefing form including mobile number**, service/budget chip selectors, POST → **real backend** `/api/contact`, success state + sonner toast, 3 office cards + direct channels rail
+- **Admin Dashboard (`/admin`)** — password gate using single shared-secret from `ADMIN_PASSWORD` env; listing of all briefings with stats cards (total / today / with-phone / services), row-click detail modal (email/phone/company/service/budget/note), delete, refresh, sign-out. Navbar/Footer hidden on admin pages.
+- Backend `/api/contact` persists to Mongo `contact_submissions` collection; `/api/admin/*` endpoints gated by `X-Admin-Token` header
+- ScrollToTop on route change
 - All interactive elements have unique `data-testid` attributes
-- 100% mobile responsive verified at 390px
+- 100% mobile responsive
 
 ## Testing
-- `/app/test_reports/iteration_1.json` — 98% pass, single medium bug (ScrollToTop) **fixed**
-- No backend tests (static UI)
+- Iteration 1: 98% pass → ScrollToTop bug fixed
+- **Iteration 2: 100% pass (16/16 backend, 100% frontend flows)** — contact + admin dashboard verified end-to-end
+- Admin credentials at `/app/memory/test_credentials.md`
 
 ## P0/P1/P2 Backlog (next phases)
 - P1: Real project video assets + richer case-study detail pages (dedicated /projects/:slug)
