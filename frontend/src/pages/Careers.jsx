@@ -3,6 +3,7 @@ import { ArrowUpRight, MapPin, Clock, X } from "lucide-react";
 import { toast } from "sonner";
 import Reveal from "@/components/Reveal";
 import SectionLabel from "@/components/SectionLabel";
+import { CareersAtom } from "@/components/AtomicArt";
 import { ROLES, BENEFITS } from "@/lib/data";
 
 function RoleApplyDialog({ role, onClose }) {
@@ -111,6 +112,7 @@ export default function Careers() {
       {/* Hero */}
       <section className="relative overflow-hidden pt-[140px] md:pt-[180px] pb-16 md:pb-24">
         <div className="hero-grid absolute inset-0 opacity-50 pointer-events-none" />
+        <CareersAtom className="hidden lg:block absolute right-[-60px] top-[60px] h-[560px] w-[560px] opacity-80 pointer-events-none z-[5]" />
         <div className="relative mx-auto max-w-[1400px] px-5 md:px-10">
           <Reveal>
             <SectionLabel>Careers · 8 Open Roles</SectionLabel>

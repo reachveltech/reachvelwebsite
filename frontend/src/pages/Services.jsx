@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight, ArrowRight } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import SectionLabel from "@/components/SectionLabel";
+import { ServicesAtom } from "@/components/AtomicArt";
 import { SERVICES } from "@/lib/data";
 
 export default function Services() {
@@ -13,6 +14,7 @@ export default function Services() {
       {/* Hero */}
       <section className="relative pt-[140px] md:pt-[180px] pb-20 md:pb-24">
         <div className="radial-fade-dark absolute inset-0 pointer-events-none" />
+        <ServicesAtom className="hidden lg:block absolute right-0 bottom-[-10px] h-[360px] w-[720px] opacity-90 pointer-events-none z-[5]" />
         <div className="relative mx-auto max-w-[1400px] px-5 md:px-10">
           <Reveal>
             <SectionLabel tone="dark">Capabilities · 07 Disciplines</SectionLabel>

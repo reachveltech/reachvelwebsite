@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight, Search } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import SectionLabel from "@/components/SectionLabel";
+import { KnowledgeAtom } from "@/components/AtomicArt";
 import { ARTICLES } from "@/lib/data";
 
 const CATS = ["All", "AI", "Web", "Mobile", "Design"];
@@ -27,6 +28,7 @@ export default function Knowledge() {
       {/* Hero */}
       <section className="relative overflow-hidden pt-[140px] md:pt-[180px] pb-16 md:pb-24">
         <div className="hero-grid absolute inset-0 opacity-50 pointer-events-none" />
+        <KnowledgeAtom className="hidden lg:block absolute right-[-40px] top-[100px] h-[500px] w-[600px] opacity-85 pointer-events-none z-[5]" />
         <div className="relative mx-auto max-w-[1400px] px-5 md:px-10">
           <Reveal>
             <SectionLabel>Knowledge Center</SectionLabel>

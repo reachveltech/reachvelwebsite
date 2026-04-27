@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight, Play } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import SectionLabel from "@/components/SectionLabel";
+import { ProjectsAtom } from "@/components/AtomicArt";
 import { PROJECTS } from "@/lib/data";
 
 const FILTERS = ["All", "Fintech", "Healthcare", "Retail", "Data", "AI"];
@@ -24,6 +25,7 @@ export default function Projects() {
       {/* Hero */}
       <section className="relative pt-[140px] md:pt-[180px] pb-14 md:pb-20">
         <div className="radial-fade-dark absolute inset-0 pointer-events-none" />
+        <ProjectsAtom className="hidden lg:block absolute right-[-40px] top-[90px] h-[520px] w-[520px] opacity-85 pointer-events-none z-[5]" />
         <div className="relative mx-auto max-w-[1400px] px-5 md:px-10">
           <Reveal>
             <SectionLabel tone="dark">Case Studies · 2023 – 2025</SectionLabel>

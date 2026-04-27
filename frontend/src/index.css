@@ -152,6 +152,38 @@ code, .mono {
 }
 .ai-halo { animation: ai-halo 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 
+/* nucleation pop — atoms appearing from nucleus outward */
+@keyframes nucleate {
+    0%   { opacity: 0; transform: scale(0.2); }
+    60%  { opacity: 1; transform: scale(1.12); }
+    100% { opacity: 1; transform: scale(1); }
+}
+.nucleate { animation: nucleate 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite; transform-box: fill-box; transform-origin: center; }
+
+/* wave flow — dash slide for sine paths */
+@keyframes wave-flow {
+    from { stroke-dashoffset: 0; }
+    to   { stroke-dashoffset: -120; }
+}
+.wave-flow {
+    stroke-dasharray: 4 8;
+    animation: wave-flow 3s linear infinite;
+}
+
+/* trajectory particle fade */
+@keyframes trajectory-fade {
+    0%, 100% { opacity: 0; }
+    50%      { opacity: 1; }
+}
+.trajectory-fade { animation: trajectory-fade 3s ease-in-out infinite; }
+
+/* lattice pulse — staggered glow through a row of atoms */
+@keyframes lattice-pulse {
+    0%, 100% { opacity: 0.2; transform: scale(1); }
+    50%      { opacity: 1;   transform: scale(1.25); }
+}
+.lattice-pulse { animation: lattice-pulse 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+
 /* pulse-dot */
 @keyframes pulse-dot {
     0%, 100% { opacity: 1; transform: scale(1); }

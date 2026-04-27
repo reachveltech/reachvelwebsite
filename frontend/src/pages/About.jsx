@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import SectionLabel from "@/components/SectionLabel";
+import { AboutAtom } from "@/components/AtomicArt";
 import { VALUES, STATS, LEADERSHIP } from "@/lib/data";
 
 export default function About() {
@@ -10,6 +11,7 @@ export default function About() {
       {/* Hero */}
       <section className="relative overflow-hidden pt-[140px] md:pt-[180px] pb-20 md:pb-24">
         <div className="hero-grid absolute inset-0 opacity-50 pointer-events-none" />
+        <AboutAtom className="hidden lg:block absolute right-[-60px] top-[80px] h-[560px] w-[560px] opacity-80 pointer-events-none z-[5]" />
 
         <div className="relative mx-auto max-w-[1400px] px-5 md:px-10">
           <Reveal>
