@@ -122,8 +122,14 @@ export default function ClientLogos({ token }) {
           <h2 className="mt-1 crm-h text-3xl md:text-4xl text-[#0a0a0a]">Client logos</h2>
           <p className="mt-2 text-sm text-[#4a4a4a] max-w-2xl">
             Upload PNG/SVG logos to appear in the homepage marquee. Transparent backgrounds work best.
-            All logos are auto-fitted to the same size at runtime.
           </p>
+          <div className="mt-3 inline-flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-mono text-[#4a4a4a]">
+            <span><span className="text-[#ff5722] font-bold">Recommended:</span> 320 × 120 px (≈ 3:1 ratio)</span>
+            <span>·</span>
+            <span>PNG with transparent background or SVG</span>
+            <span>·</span>
+            <span>Dark/black artwork (we apply grayscale)</span>
+          </div>
         </div>
         <button
           onClick={startNew}
@@ -251,7 +257,7 @@ export default function ClientLogos({ token }) {
                       onChange={onPickFile}
                       className="hidden"
                     />
-                    <span className="text-[10px] font-mono text-[#4a4a4a]">Max 1.5 MB · transparent PNG/SVG looks best</span>
+                    <span className="text-[10px] font-mono text-[#4a4a4a]">Max 1.5 MB · ideal size 320 × 120 px (3:1) · transparent PNG/SVG</span>
                   </div>
                 </div>
               </div>

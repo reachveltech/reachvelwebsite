@@ -60,13 +60,13 @@ export default function ClientsMarquee({ theme = "light" }) {
               target={c.website ? "_blank" : undefined}
               rel={c.website ? "noreferrer" : undefined}
               onClick={(e) => { if (!c.website) e.preventDefault(); }}
-              className="shrink-0 h-12 w-32 md:w-36 flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity duration-300"
+              className="shrink-0 h-16 md:h-20 w-36 md:w-44 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity duration-300"
               title={c.name}
             >
               <img
                 src={c.src}
                 alt={c.name}
-                className={`max-h-10 max-w-full object-contain ${dark ? "invert brightness-0 opacity-80" : "grayscale"}`}
+                className={`max-h-14 md:max-h-16 max-w-full object-contain ${dark ? "invert brightness-0 opacity-80" : "grayscale"}`}
                 loading="lazy"
               />
             </a>
