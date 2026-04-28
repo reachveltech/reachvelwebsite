@@ -10,6 +10,7 @@ export const fetchProjects = () => client.get("/projects").then((r) => r.data);
 export const fetchArticles = () => client.get("/articles").then((r) => r.data);
 export const fetchArticle  = (slug) => client.get(`/articles/${slug}`).then((r) => r.data);
 export const fetchRoles    = () => client.get("/roles").then((r) => r.data);
+export const fetchClientLogos = () => client.get("/client-logos").then((r) => r.data);
 
 // Admin (token via X-Admin-Token)
 const auth = (t) => ({ headers: { "X-Admin-Token": t } });
@@ -28,6 +29,11 @@ export const adminListRoles      = (t) => client.get("/admin/roles", auth(t)).th
 export const adminCreateRole     = (t, p) => client.post("/admin/roles", p, auth(t)).then((r) => r.data);
 export const adminUpdateRole     = (t, id, p) => client.put(`/admin/roles/${id}`, p, auth(t)).then((r) => r.data);
 export const adminDeleteRole     = (t, id) => client.delete(`/admin/roles/${id}`, auth(t)).then((r) => r.data);
+
+export const adminListClientLogos   = (t) => client.get("/admin/client-logos", auth(t)).then((r) => r.data);
+export const adminCreateClientLogo  = (t, p) => client.post("/admin/client-logos", p, auth(t)).then((r) => r.data);
+export const adminUpdateClientLogo  = (t, id, p) => client.put(`/admin/client-logos/${id}`, p, auth(t)).then((r) => r.data);
+export const adminDeleteClientLogo  = (t, id) => client.delete(`/admin/client-logos/${id}`, auth(t)).then((r) => r.data);
 
 // ─────────── CRM (Reachvel Dashboard) ───────────
 const crm = "/admin/crm";

@@ -1,8 +1,27 @@
+import { useEffect, useState } from "react";
 import { CLIENTS } from "@/lib/data";
+import { fetchClientLogos } from "@/lib/api";
 
 export default function ClientsMarquee({ theme = "light" }) {
   const dark = theme === "dark";
-  const all = [...CLIENTS, ...CLIENTS];
+  const [items, setItems] = useState(null); // null = loading, [] = none yet
+
+  useEffect(() => {
+    let mounted = true;
+    fetchClientLogos()
+      .then((data) => {
+        if (!mounted) return;
+        const apiItems = (data || []).map((d) => ({ name: d.name, src: d.image, website: d.website }));
+        setItems(apiItems);
+      })
+      .catch(() => mounted && setItems([]));
+    return () => { mounted = false; };
+  }, []);
+
+  // While loading or if admin hasn't added any, show static seed list
+  const list = items === null || items.length === 0 ? CLIENTS : items;
+  const all = [...list, ...list];
+
   return (
     <section
       data-testid="clients-marquee"
@@ -11,7 +30,7 @@ export default function ClientsMarquee({ theme = "light" }) {
       }`}
     >
       <div className="mx-auto max-w-[1400px] px-5 md:px-10 mb-8 flex items-center justify-between gap-6">
-        <div className={`text-[11px] uppercase tracking-[0.3em] font-bold ${dark ? "text-[#ff5722]" : "text-[#ff5722]"}`}>
+        <div className="text-[11px] uppercase tracking-[0.3em] font-bold text-[#ff5722]">
           Clients & Collaborators
         </div>
         <div className={`hidden md:block text-xs font-mono ${dark ? "text-white/40" : "text-black/40"}`}>
@@ -33,19 +52,24 @@ export default function ClientsMarquee({ theme = "light" }) {
               : "bg-gradient-to-l from-[#f7f6f3] to-transparent"
           }`}
         />
-        <div className="flex gap-16 animate-marquee w-max">
+        <div className="flex gap-10 md:gap-14 animate-marquee w-max items-center">
           {all.map((c, i) => (
-            <div
+            <a
               key={`${c.name}-${i}`}
-              className="h-10 flex items-center opacity-60 hover:opacity-100 transition-opacity duration-300"
+              href={c.website || "#"}
+              target={c.website ? "_blank" : undefined}
+              rel={c.website ? "noreferrer" : undefined}
+              onClick={(e) => { if (!c.website) e.preventDefault(); }}
+              className="shrink-0 h-12 w-32 md:w-36 flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity duration-300"
+              title={c.name}
             >
               <img
                 src={c.src}
                 alt={c.name}
-                className={`h-7 md:h-8 w-auto object-contain ${dark ? "invert brightness-0 opacity-80" : "grayscale"}`}
+                className={`max-h-10 max-w-full object-contain ${dark ? "invert brightness-0 opacity-80" : "grayscale"}`}
                 loading="lazy"
               />
-            </div>
+            </a>
           ))}
         </div>
       </div>

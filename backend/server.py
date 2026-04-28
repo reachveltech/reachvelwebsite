@@ -619,6 +619,56 @@ async def admin_delete_role(rid: str, _: dict = Depends(require_admin)):
     return {"ok": True}
 
 
+# ───────────────── Client Logos ─────────────────
+class ClientLogoIn(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    image: str = Field(min_length=1)  # https URL or data:image/* base64
+    website: str = Field(default="", max_length=500)
+    display_order: int = 0
+    active: bool = True
+
+
+@api_router.get("/client-logos")
+async def public_list_client_logos():
+    return await db.client_logos.find(
+        {"active": True}, {"_id": 0}
+    ).sort("display_order", 1).to_list(200)
+
+
+@api_router.get("/admin/client-logos")
+async def admin_list_client_logos(_: dict = Depends(require_admin)):
+    return await db.client_logos.find({}, {"_id": 0}).sort("display_order", 1).to_list(500)
+
+
+@api_router.post("/admin/client-logos")
+async def admin_create_client_logo(payload: ClientLogoIn, _: dict = Depends(require_admin)):
+    doc = payload.model_dump()
+    doc["id"] = str(uuid.uuid4())
+    doc["created_at"] = now_iso()
+    doc["updated_at"] = now_iso()
+    await db.client_logos.insert_one(dict(doc))
+    return await db.client_logos.find_one({"id": doc["id"]}, {"_id": 0})
+
+
+@api_router.put("/admin/client-logos/{cid}")
+async def admin_update_client_logo(cid: str, payload: ClientLogoIn, _: dict = Depends(require_admin)):
+    existing = await db.client_logos.find_one({"id": cid})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Not found")
+    updates = payload.model_dump()
+    updates["updated_at"] = now_iso()
+    await db.client_logos.update_one({"id": cid}, {"$set": updates})
+    return await db.client_logos.find_one({"id": cid}, {"_id": 0})
+
+
+@api_router.delete("/admin/client-logos/{cid}")
+async def admin_delete_client_logo(cid: str, _: dict = Depends(require_admin)):
+    res = await db.client_logos.delete_one({"id": cid})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Not found")
+    return {"ok": True}
+
+
 app.include_router(api_router)
 
 # ───────────────── CRM router ─────────────────
