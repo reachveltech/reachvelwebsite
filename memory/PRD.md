@@ -1,59 +1,59 @@
-# Reachvel — Premium Marketing Website + CMS
+# Reachvel — Premium Marketing Website + CMS + CRM
 
 ## Original Problem Statement
 Premium UI/UX for Reachvel (AI-powered Web/Mobile/Digital studio): Home, About, Services, Projects (with images & videos), Careers, Knowledge Center, Contact. 100% mobile responsive. Microsoft/Accenture/Infosys-level polish, physics/chemistry metaphor, Lumina + Finch inspirations.
 
+**Phase 2 (CMS + SEO)**: Full admin-managed CMS for Projects, Knowledge, Careers, Briefings. SEO (meta, JSON-LD, sitemap, robots).
+
+**Phase 3 (CRM — this phase)**: Brand-new "Reachvel Dashboard (CRM)" inside the admin panel, completely separate from Website CMS. Modules: Analytics, Leads, Vendors, Reachvel Projects (with Tasks, Expenses, Vendor Payments, Invoices, Client Payments), general Tasks, Project Payments, Reachvel Payments. INR-only currency, manual GST 18% default that auto-computes gst_amount + total on invoices and vendor payments. Single-admin.
+
 ## Architecture
-- **Stack**: React 19 + React Router 7 + Tailwind + shadcn/ui + sonner + lucide-react + react-helmet-async + axios
-- **Backend**: FastAPI + Motor (Mongo). bcrypt, secrets-based session tokens.
-- **Content**: Now CMS-driven (Mongo) for `projects`, `articles`, `roles`. `BRAND`, `SERVICES`, `STATS`, `LEADERSHIP` etc. remain in `/app/frontend/src/lib/data.js`.
+- **Stack**: React 19 + React Router 7 + Tailwind + shadcn/ui + sonner + lucide-react + react-helmet-async + recharts + axios
+- **Backend**: FastAPI + Motor (Mongo). bcrypt, secrets-based session tokens. CRM split into `crm_routes.py`.
+- **Content**: CMS-driven (Mongo) for `projects`, `articles`, `roles`. `BRAND`, `SERVICES`, `STATS`, `LEADERSHIP` etc. remain in `/app/frontend/src/lib/data.js`.
+- **CRM**: Mongo collections — `leads`, `vendors`, `crm_projects`, `crm_tasks`, `project_expenses`, `vendor_payments`, `project_invoices`, `project_payments`, `reachvel_payments`
 - **Auth**: Single-admin, bcrypt-hashed in `admin_config`, opaque 24h tokens in `admin_sessions`, IP rate limiter via `login_attempts`.
 
-## What's Been Implemented (Dec 2025)
-**Public site**
-- Navbar (theme-aware), Footer (3 offices), Mobile overlay
-- Real Reachvel logo (transparent PNGs, light + dark variants) wired everywhere
-- Per-page atomic visuals (Home synthesis molecule, About compound, Services benzene ring, Projects trajectory field, Careers nucleation lattice, Knowledge wave interference)
-- Pages: Home, About, Services, Projects (filter + modal video), Careers (apply modal), Knowledge (filter + search), Article (drop-cap + related), Contact (validated form, posts to `/api/contact`)
-- 100% mobile responsive · animations across the site
+## What's Been Implemented
 
-**Backend**
-- `/api/contact` POST, `contact_submissions` Mongo collection
-- Hardened admin auth: `/api/admin/login`, `/logout`, `/rotate-password`, IP rate-limit (5 fails/5min → 15min), 24h sessions
-- Submission status lifecycle (`new → reviewing → contacted → won / lost`), search + status filter on list, stats (total / today / by_status)
-- **CMS endpoints**: public `GET /api/projects | /api/articles | /api/articles/:slug | /api/roles`; admin CRUD `GET/POST/PUT/DELETE /api/admin/projects | /api/admin/articles | /api/admin/roles`
-- Seed on first startup from `/app/backend/seed_data.py`
-- Unique slug enforcement, display_order, featured flag for articles, active toggle for roles
+**Dec 2025 — Public site + CMS + SEO**
+- 7 pages with per-page physics/atomic SVG art; theme-aware Navbar, transparent logos; contact form wired to `/api/contact`
+- Admin auth (bcrypt, rate-limit, 24h session), Website CMS (Briefings, Projects, Knowledge, Careers) with CrudPanel + cmsConfig
+- SEO — `<Seo>` component, JSON-LD, `robots.txt`, `sitemap.xml`
 
-**Admin Dashboard `/admin`**
-- Tabbed: **Briefings · Projects · Knowledge · Careers** (active tab persists in localStorage)
-- Briefings: stats strip, search, status filter chips, S.No, per-row status dropdown, detail modal, change-password modal
-- Generic `CrudPanel` + field configs in `cmsConfig.js` for each entity. Forms cover all fields including arrays (services tags, body paragraphs, metrics `VALUE | LABEL`).
-
-**SEO**
-- `react-helmet-async` + `<Seo>` component on every page → unique title, description, canonical, OG, Twitter card
-- JSON-LD: Organization on Home, Article on Knowledge detail
-- `robots.txt` (disallows `/admin` and `/api`), `sitemap.xml`
-- Updated `index.html` with default OG/twitter tags + favicon (logo)
+**Feb 2026 — Reachvel Dashboard (CRM)**
+- Admin refactored from top-tab layout to sidebar with TWO groups: "Website CMS" (4 existing entities) + "Reachvel Dashboard" (7 new modules).
+- Backend (`/app/backend/crm_routes.py`): 9 CRUD entities + analytics endpoint under `/api/admin/crm/*`. GST auto-calc on invoices & vendor_payments (amount + gst_pct → gst_amount, total) on CREATE and UPDATE.
+- Frontend CRM pages under `/app/frontend/src/components/admin/crm/`:
+  - `CrmPanel.jsx` (generic table CRUD + search + filters + form modal)
+  - `Analytics.jsx` — Recharts cashflow line, 3 pie/bar charts, KPI grid (net profit, revenue, pipeline, etc.)
+  - `Leads.jsx` — stage funnel, deal value in INR
+  - `Vendors.jsx` — directory with GSTIN
+  - `CrmProjects.jsx` + `ProjectDetail.jsx` — project list → detail with 5 sub-tabs (Tasks, Expenses, Vendor Payments, Invoices, Client Payments)
+  - `Tasks.jsx` — unified tasks (general + project-linked)
+  - `ProjectPayments.jsx` — aggregate incoming client payments across all projects
+  - `ReachvelPayments.jsx` — company credit/debit ledger
+- All monetary fields render in Indian locale (₹ INR). GST default 18% pre-filled, user-editable.
 
 ## Testing
 - Iteration 1: 98% → fixed
-- Iteration 2: 100% (16/16 backend + frontend)
+- Iteration 2: 100% (16/16)
 - Iteration 3: 100% (22/22) — auth hardening
-- **Iteration 4: 100% (49/49 backend + frontend SEO + CMS) — all green**
-- Admin password unchanged: `reachvel-admin-2026` (rotate via dashboard)
+- Iteration 4: 100% (49/49) — CMS + SEO
+- **Iteration 5: 100% (99/99 backend pytest + full frontend verification)** — CRM module green. GST recompute on UPDATE verified, auth-gating on all CRM endpoints verified, Analytics aggregation math verified.
 
 ## Backlog (P1/P2)
-- Slack/email notification on new contact submission
+- CSV export + date-range filters on CRM lists (leads, payments, invoices)
+- Split `backend/server.py` further into routers (auth/cms/submissions); CRM already separate
+- Email notification on new lead / new submission
+- File/image uploads for CMS + receipt attachments on expenses
+- Rich-text editor for article body
+- Currency/locale toggle (if expanding beyond INR)
 - Pagination on public `/api/projects` and `/api/articles` once content scales
-- Split `backend/server.py` into routers (auth/cms/submissions) — currently ~630 lines
-- CSV export & date-range picker on Briefings tab
 - TTL index on `login_attempts`; optional httpOnly-cookie auth
-- Image/file uploads in CMS (currently URL-only); rich-text editor for article body
-- i18n, smooth-scroll (Lenis), magnetic CTA cursor
 
 ## Next Action Items
-- Notification webhook for new submissions
-- CMS: file uploads + rich-text editor
-- Refactor backend into routers
+- Seed demo CRM data (optional — aids initial user experience)
+- Email/webhook notification for new leads and briefings
+- CSV export on CRM lists
 - Real client logos/videos in projects (replace placeholders)
