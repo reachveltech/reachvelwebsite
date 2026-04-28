@@ -28,3 +28,16 @@ export const adminListRoles      = (t) => client.get("/admin/roles", auth(t)).th
 export const adminCreateRole     = (t, p) => client.post("/admin/roles", p, auth(t)).then((r) => r.data);
 export const adminUpdateRole     = (t, id, p) => client.put(`/admin/roles/${id}`, p, auth(t)).then((r) => r.data);
 export const adminDeleteRole     = (t, id) => client.delete(`/admin/roles/${id}`, auth(t)).then((r) => r.data);
+
+// ─────────── CRM (Reachvel Dashboard) ───────────
+const crm = "/admin/crm";
+
+export const crmAnalytics = (t) => client.get(`${crm}/analytics`, auth(t)).then((r) => r.data);
+
+// Generic CRUD helpers — pass entity path e.g. "leads", "vendors", "projects", "tasks",
+// "expenses", "vendor-payments", "invoices", "project-payments", "reachvel-payments".
+export const crmList   = (t, entity, params = {}) => client.get(`${crm}/${entity}`, { ...auth(t), params }).then((r) => r.data);
+export const crmGet    = (t, entity, id) => client.get(`${crm}/${entity}/${id}`, auth(t)).then((r) => r.data);
+export const crmCreate = (t, entity, payload) => client.post(`${crm}/${entity}`, payload, auth(t)).then((r) => r.data);
+export const crmUpdate = (t, entity, id, payload) => client.put(`${crm}/${entity}/${id}`, payload, auth(t)).then((r) => r.data);
+export const crmDelete = (t, entity, id) => client.delete(`${crm}/${entity}/${id}`, auth(t)).then((r) => r.data);

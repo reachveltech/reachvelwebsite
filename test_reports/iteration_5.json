@@ -1,0 +1,32 @@
+{
+  "summary": "Iteration 5 (Reachvel Dashboard CRM) verified end-to-end. Backend: 99/99 pytest PASS — 50 new CRM tests (test_crm.py) + 49 regression tests (backend_test.py + test_cms.py). New CRM coverage: auth-gating on ALL CRM endpoints (GET+POST without X-Admin-Token → 401) parametrized across /leads /vendors /projects /tasks /expenses /vendor-payments /invoices /project-payments /reachvel-payments /analytics; Leads full CRUD with stage validation (banana → 400), stage filter, case-insensitive q search, update persistence; Vendors CRUD + q search; CRM Projects create/filter by status=in_progress + status validation → 400; Tasks create + compound filter project_id+status=todo; GST auto-calc — invoice POST amount=1000 gst_pct=18 → gst_amount=180.0, total=1180.0; invoice PUT amount=2000 gst_pct=5 → gst_amount=100.0, total=2100.0 (confirms recompute on UPDATE, not just create); vendor-payment same recompute on update (amount=1000 gst_pct=12 → 120.0/1120.0); Reachvel payments type validation + filter type=debit; Analytics shape (summary keys revenue_collected/invoiced_total/invoiced_paid/invoiced_pending/total_expenses/total_vendor_outflow/total_credit/total_debit/net_profit/pipeline_value/won_value + leads_by_stage/projects_by_status/tasks_by_status/monthly[{month,revenue,expenses}]/top_vendors) + aggregation math (credit 5000 / debit 2000 / project-payment 1000 correctly reflected); _id scrub verified on all 9 list endpoints. Frontend UI: admin login with 'reachvel-admin-2026' succeeds; sidebar renders both 'WEBSITE CMS' (briefings/projects/knowledge/careers) and 'REACHVEL DASHBOARD' (analytics/leads/vendors/reachvel-projects/tasks/project-payments/reachvel-payments) — ALL 11 admin-nav-* testids present; Leads flow — 'New' opens crm-form-modal-leads, saving persists a row visible in table, ₹ INR symbol renders, created lead TEST UI Lead Alpha appears; CRM Projects detail view shows ALL 5 sub-tab testids (project-subtab-tasks/expenses/vendor/invoices/payments); Invoice form pre-fills GST=18 with 'Default 18%.' hint (visible in screenshot); Reachvel Payments page shows type filter pills (All/Credit/Debit) and debit rows render '- ₹8,00,000.00' in red as specified; Analytics page renders all 5 Recharts testids (chart-monthly-cashflow/leads-stage/projects-status/tasks-status/top-vendors); Briefings (Website CMS regression) still loads with submissions table intact.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_crm.py",
+    "/app/test_reports/pytest/iteration_5_crm.xml",
+    "/app/test_reports/pytest/iteration_5_regression.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "crm_routes.py uses module-level globals (_db, _require_admin) set inside build_router — functional but not thread/reload-safe. Prefer closure capture or a small class-based router factory so tests can import multiple router instances.",
+    "Generic _create/_update hardcode GST recompute via if-branch on collection_name. Consider moving GST computation into a dedicated _apply_gst(doc) helper called from the two specific endpoints — keeps the generic helper truly generic and makes future per-collection hooks easier.",
+    "Validation gaps on PUT endpoints for vendor-payments and invoices: create_vendor_payment and create_invoice validate status (PAYMENT_STATUSES / INVOICE_STATUSES), but update_vendor_payment and update_invoice DO NOT re-validate status. A PUT with status='banana' will silently save. Same for update_task priority. Recommend adding the same validation on update paths.",
+    "crm_routes.py analytics endpoint does 9 separate Mongo finds (all with .to_list(5000)). For current scale this is fine; at 10k+ docs a single aggregation pipeline per metric would be cheaper. Flag for later.",
+    "Frontend GET /admin/crm/leads?stage=all — backend correctly treats 'all' as no filter (good), but this contract isn't documented; consider returning 400 for unknown stage values on GET too, for parity with POST."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_crm.py (new — 50 CRM tests covering auth, CRUD, GST on create+update, filters, search, analytics, _id scrub)"
+  ],
+  "success_rate": {"backend": "100% (99/99: 50 CRM + 49 regression)", "frontend": "100% verified flows"},
+  "test_credentials": "Admin password 'reachvel-admin-2026' — verified live during UI login and in backend_test.py::test_zzzz_password_restored.",
+  "seed_data_creation": "test_crm.py creates TEST-prefixed leads/vendors/projects/tasks/invoices/vendor-payments/reachvel-payments/project-payments inside each test class and deletes them in a test_cleanup method. UI test created one 'TEST UI Lead Alpha' and one 'TEST UI Proj Detail' via the UI. Minor residue may remain from the UI path (no programmatic cleanup inside playwright script), but all entities are prefixed TEST so easy to sweep.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run ALL backend tests with: REACT_APP_BACKEND_URL=<preview> python -m pytest /app/backend/tests/ -v. CRM tests live at /app/backend/tests/test_crm.py (50 tests, 4.6s). GST rounding is round(x, 2); tests assert exact floats — keep in mind if the backend ever switches to Decimal. Validation of status/priority fields happens ONLY on POST in crm_routes.py — a hypothetical update with an invalid enum will succeed silently; see critical_code_review_comments. Frontend URL is whatever /app/frontend/.env REACT_APP_BACKEND_URL points to (currently https://reachvel-studio.preview.emergentagent.com). Admin session cookie name in localStorage is 'reachvel_admin_token'.",
+  "rca of the issue": "No defects found. Backend CRM module meets every acceptance criterion listed in the review request (GST auto-calc on create AND update, stage/status validation on POST, filters, search, analytics aggregation shape + math, _id scrub, auth gating). Frontend sidebar layout exposes all required testids and Website CMS regression is intact. Only forward-looking code-quality notes are captured under critical_code_review_comments."
+}

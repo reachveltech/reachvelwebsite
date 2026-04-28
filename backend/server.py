@@ -18,6 +18,7 @@ import uuid
 from datetime import datetime, timezone, timedelta
 
 from seed_data import PROJECTS_SEED, ARTICLES_SEED, ROLES_SEED
+from crm_routes import build_router as build_crm_router
 
 
 mongo_url = os.environ['MONGO_URL']
@@ -181,6 +182,13 @@ async def seed_everything():
     await db.login_attempts.create_index("created_at")
     await db.projects.create_index("slug", unique=True)
     await db.articles.create_index("slug", unique=True)
+
+    # CRM indexes
+    for col in ("leads", "vendors", "crm_projects", "crm_tasks",
+                "project_expenses", "vendor_payments", "project_invoices",
+                "project_payments", "reachvel_payments"):
+        await db[col].create_index("id", unique=True)
+        await db[col].create_index("created_at")
 
     # admin seed
     doc = await db.admin_config.find_one({"key": "password_hash"})
@@ -612,6 +620,12 @@ async def admin_delete_role(rid: str, _: dict = Depends(require_admin)):
 
 
 app.include_router(api_router)
+
+# ───────────────── CRM router ─────────────────
+crm_router = build_crm_router(db, require_admin)
+_crm_wrapper = APIRouter(prefix="/api")
+_crm_wrapper.include_router(crm_router)
+app.include_router(_crm_wrapper)
 
 app.add_middleware(
     CORSMiddleware,

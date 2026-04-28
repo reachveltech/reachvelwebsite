@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   ArrowUpRight, LogOut, Trash2, RefreshCw, Mail, Phone, Building2, Tag, Wallet,
   MessageSquare, Search, KeyRound, X, Inbox, Briefcase, BookOpen, Users,
+  LayoutDashboard, UserCircle2, Truck, FolderKanban, ListChecks, Coins, Receipt, Menu,
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import CrudPanel from "@/components/admin/CrudPanel";
@@ -12,18 +13,46 @@ import {
   PROJECT_FIELDS, ARTICLE_FIELDS, ROLE_FIELDS,
   PROJECT_OPS, ARTICLE_OPS, ROLE_OPS,
 } from "@/components/admin/cmsConfig";
+import Analytics from "@/components/admin/crm/Analytics";
+import Leads from "@/components/admin/crm/Leads";
+import Vendors from "@/components/admin/crm/Vendors";
+import CrmProjects from "@/components/admin/crm/CrmProjects";
+import Tasks from "@/components/admin/crm/Tasks";
+import ProjectPayments from "@/components/admin/crm/ProjectPayments";
+import ReachvelPayments from "@/components/admin/crm/ReachvelPayments";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const TOKEN_KEY = "reachvel_admin_token";
 const TAB_KEY = "reachvel_admin_tab";
 
-const TABS = [
-  { k: "briefings", label: "Briefings", icon: Inbox },
-  { k: "projects",  label: "Projects",  icon: Briefcase },
-  { k: "knowledge", label: "Knowledge", icon: BookOpen },
-  { k: "careers",   label: "Careers",   icon: Users },
+// Sidebar groups
+const NAV_GROUPS = [
+  {
+    label: "Website CMS",
+    items: [
+      { k: "briefings", label: "Briefings", icon: Inbox },
+      { k: "projects",  label: "Projects",  icon: Briefcase },
+      { k: "knowledge", label: "Knowledge", icon: BookOpen },
+      { k: "careers",   label: "Careers",   icon: Users },
+    ],
+  },
+  {
+    label: "Reachvel Dashboard",
+    items: [
+      { k: "crm-analytics",        label: "Analytics",         icon: LayoutDashboard },
+      { k: "crm-leads",            label: "Leads",             icon: UserCircle2 },
+      { k: "crm-vendors",          label: "Vendors",           icon: Truck },
+      { k: "crm-projects",         label: "Reachvel Projects", icon: FolderKanban },
+      { k: "crm-tasks",            label: "Tasks",             icon: ListChecks },
+      { k: "crm-project-payments", label: "Project Payments",  icon: Coins },
+      { k: "crm-reachvel-payments",label: "Reachvel Payments", icon: Receipt },
+    ],
+  },
 ];
+
+const ALL_TABS = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.k));
+const LABEL_FOR = Object.fromEntries(NAV_GROUPS.flatMap((g) => g.items.map((i) => [i.k, i.label])));
 
 const STATUSES = [
   { k: "new",        label: "New",        dot: "bg-[#ff5722]"   },
@@ -57,13 +86,17 @@ export default function Admin() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selected, setSelected] = useState(null);
   const [pwModalOpen, setPwModalOpen] = useState(false);
-  const [tab, setTab] = useState(() => localStorage.getItem(TAB_KEY) || "briefings");
+  const [tab, setTab] = useState(() => {
+    const saved = localStorage.getItem(TAB_KEY);
+    return saved && ALL_TABS.includes(saved) ? saved : "briefings";
+  });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => { localStorage.setItem(TAB_KEY, tab); }, [tab]);
 
   const debounceRef = useRef(null);
 
-  const fetchAll = async (t = token, query = q, filter = statusFilter) => {
+  const fetchBriefings = async (t = token, query = q, filter = statusFilter) => {
     if (!t) return;
     setLoading(true);
     try {
@@ -90,18 +123,18 @@ export default function Admin() {
 
   useEffect(() => {
     document.title = "Reachvel · Admin";
-    if (token) fetchAll(token, "", "all");
+    if (token) fetchBriefings(token, "", "all");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // debounced refresh on q/statusFilter change
+  // debounced refresh on q/statusFilter change (only for briefings)
   useEffect(() => {
-    if (!token) return;
+    if (!token || tab !== "briefings") return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchAll(token, q, statusFilter), 280);
+    debounceRef.current = setTimeout(() => fetchBriefings(token, q, statusFilter), 280);
     return () => debounceRef.current && clearTimeout(debounceRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, statusFilter]);
+  }, [q, statusFilter, tab]);
 
   const login = async (e) => {
     e.preventDefault();
@@ -112,7 +145,7 @@ export default function Admin() {
       localStorage.setItem(TOKEN_KEY, data.token);
       setToken(data.token);
       setPassword("");
-      await fetchAll(data.token, "", "all");
+      await fetchBriefings(data.token, "", "all");
       toast.success("Signed in");
     } catch (err) {
       const status = err?.response?.status;
@@ -147,13 +180,12 @@ export default function Admin() {
       toast.success("Deleted");
       setSubmissions((xs) => xs.filter((x) => x.id !== id));
       setSelected(null);
-      fetchAll(token, q, statusFilter);
+      fetchBriefings(token, q, statusFilter);
     } catch { toast.error("Couldn't delete"); }
   };
 
   const changeStatus = async (id, newStatus) => {
     const prev = submissions.find((s) => s.id === id)?.status;
-    // optimistic
     setSubmissions((xs) => xs.map((x) => (x.id === id ? { ...x, status: newStatus } : x)));
     if (selected?.id === id) setSelected({ ...selected, status: newStatus });
     try {
@@ -163,7 +195,7 @@ export default function Admin() {
         { headers: { "X-Admin-Token": token } },
       );
       toast.success(`Marked ${STATUS_MAP[newStatus].label}`);
-      fetchAll(token, q, statusFilter);
+      fetchBriefings(token, q, statusFilter);
     } catch {
       toast.error("Couldn't update status");
       setSubmissions((xs) => xs.map((x) => (x.id === id ? { ...x, status: prev } : x)));
@@ -223,237 +255,164 @@ export default function Admin() {
   }
 
   return (
-    <div data-testid="page-admin-dashboard" className="min-h-screen bg-[#f7f6f3]">
-      <header className="sticky top-0 z-30 bg-white border-b border-black/10">
-        <div className="mx-auto max-w-[1400px] px-5 md:px-10 py-4 flex items-center justify-between gap-4">
+    <div data-testid="page-admin-dashboard" className="min-h-screen bg-[#f7f6f3] flex">
+      {/* Sidebar */}
+      <aside
+        className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0
+                    fixed md:sticky top-0 left-0 z-40 h-screen w-72 shrink-0
+                    bg-white border-r border-black/10 transition-transform flex flex-col`}
+      >
+        <div className="px-5 py-5 border-b border-black/10 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
-            <Logo theme="light" className="h-9 md:h-10 w-auto" asLink={false} />
-            <span className="font-mono text-xs uppercase tracking-[0.2em] text-[#ff5722] pl-3 border-l border-black/15">admin</span>
+            <Logo theme="light" className="h-9 w-auto" asLink={false} />
+            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#ff5722] pl-3 border-l border-black/15">admin</span>
           </Link>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPwModalOpen(true)}
-              data-testid="admin-change-password"
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-black/15 rounded-full hover:border-[#ff5722] hover:text-[#ff5722] transition-colors"
-            >
-              <KeyRound className="h-4 w-4" /> <span className="hidden md:inline">Change password</span>
-            </button>
-            <button
-              onClick={() => fetchAll()}
-              data-testid="admin-refresh"
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-black/15 rounded-full hover:border-[#ff5722] hover:text-[#ff5722] transition-colors"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-              <span className="hidden md:inline">Refresh</span>
-            </button>
-            <button
-              onClick={logout}
-              data-testid="admin-logout"
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-black/15 rounded-full hover:border-[#0a0a0a] hover:bg-[#0a0a0a] hover:text-white transition-colors"
-            >
-              <LogOut className="h-4 w-4" />
-              <span className="hidden md:inline">Sign out</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Tabs */}
-      <div className="border-b border-black/10 bg-white">
-        <div className="mx-auto max-w-[1400px] px-5 md:px-10 flex items-center gap-1 overflow-x-auto no-scrollbar">
-          {TABS.map(({ k, label, icon: Icon }) => (
-            <button
-              key={k}
-              data-testid={`admin-tab-${k}`}
-              onClick={() => setTab(k)}
-              className={`shrink-0 inline-flex items-center gap-2 px-4 md:px-5 py-4 text-sm font-semibold border-b-2 transition-colors ${
-                tab === k
-                  ? "border-[#ff5722] text-[#0a0a0a]"
-                  : "border-transparent text-[#4a4a4a] hover:text-[#0a0a0a]"
-              }`}
-            >
-              <Icon className="h-4 w-4" /> {label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <main className="mx-auto max-w-[1400px] px-5 md:px-10 py-8 md:py-12">
-        {tab === "briefings" && (<>
-        <div className="flex items-end justify-between gap-4 mb-6">
-          <div>
-            <div className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#ff5722] font-bold">
-              Briefings
-            </div>
-            <h1 className="mt-2 font-display font-black text-4xl md:text-5xl tracking-tighter text-[#0a0a0a]">
-              Client submissions
-            </h1>
-          </div>
-          <div className="text-xs font-mono text-[#4a4a4a]">
-            {numbered.length} shown · {stats.total} total · {loading ? "loading…" : "live"}
-          </div>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            data-testid="admin-sidebar-close"
+            className="md:hidden h-8 w-8 rounded-full border border-black/10 flex items-center justify-center"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
-        {/* status cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-px bg-black/10 border border-black/10 mb-8">
-          <Stat label="Total" value={stats.total} />
-          <Stat label="Today" value={stats.today} />
-          {STATUSES.map((s) => (
-            <Stat key={s.k} label={s.label} value={stats.by_status?.[s.k] ?? 0} dot={s.dot} />
-          ))}
-        </div>
-
-        {/* search + filter */}
-        <div className="flex flex-col md:flex-row md:items-center gap-3 mb-5">
-          <div className="flex items-center gap-2 bg-white border border-black/10 rounded-full px-4 py-2 w-full md:w-96">
-            <Search className="h-4 w-4 text-[#4a4a4a]" />
-            <input
-              data-testid="admin-search"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search name, email, phone, company, note…"
-              className="bg-transparent focus:outline-none text-sm flex-1"
-            />
-            {q && (
-              <button
-                onClick={() => setQ("")}
-                data-testid="admin-search-clear"
-                className="text-xs text-[#4a4a4a] hover:text-[#ff5722]"
-              >
-                clear
-              </button>
-            )}
-          </div>
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-            {[{ k: "all", label: "All", dot: "bg-[#0a0a0a]" }, ...STATUSES].map((s) => (
-              <button
-                key={s.k}
-                data-testid={`admin-filter-${s.k}`}
-                onClick={() => setStatusFilter(s.k)}
-                className={`shrink-0 inline-flex items-center gap-2 px-3 py-2 rounded-full border text-xs font-mono uppercase tracking-[0.15em] transition-colors ${
-                  statusFilter === s.k
-                    ? "bg-[#0a0a0a] border-[#0a0a0a] text-white"
-                    : "border-black/15 text-[#4a4a4a] hover:border-[#0a0a0a]"
-                }`}
-              >
-                <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
-                {s.label}
-                {s.k !== "all" && (
-                  <span className="opacity-60">{stats.by_status?.[s.k] ?? 0}</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {numbered.length === 0 ? (
-          <div className="bg-white border border-black/10 p-14 text-center">
-            <div className="font-display font-black text-3xl text-[#0a0a0a]">
-              {q || statusFilter !== "all" ? "No matches." : "No briefings yet."}
-            </div>
-            <div className="mt-3 text-[#4a4a4a]">
-              {q || statusFilter !== "all"
-                ? "Try a different search or filter."
-                : "When someone submits the contact form, they'll appear here."}
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white border border-black/10 overflow-x-auto">
-            <table className="w-full text-left min-w-[900px]">
-              <thead className="bg-[#f7f6f3] border-b border-black/10 text-[11px] font-mono uppercase tracking-[0.2em] text-[#4a4a4a]">
-                <tr>
-                  <th className="px-4 py-4 w-12">S.No</th>
-                  <th className="px-4 py-4">When</th>
-                  <th className="px-4 py-4">Name</th>
-                  <th className="px-4 py-4">Email</th>
-                  <th className="px-4 py-4 hidden lg:table-cell">Phone</th>
-                  <th className="px-4 py-4 hidden lg:table-cell">Service</th>
-                  <th className="px-4 py-4">Status</th>
-                  <th className="px-4 py-4"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {numbered.map((s) => (
-                  <tr
-                    key={s.id}
-                    data-testid={`admin-row-${s.id}`}
-                    className="border-b border-black/5 hover:bg-[#0a0a0a]/[0.02] transition-colors"
-                  >
-                    <td className="px-4 py-4 text-xs font-mono text-[#4a4a4a]">{String(s.sno).padStart(2, "0")}</td>
-                    <td className="px-4 py-4 text-xs font-mono text-[#4a4a4a] whitespace-nowrap">{fmtDate(s.created_at)}</td>
-                    <td className="px-4 py-4 font-semibold text-[#0a0a0a] cursor-pointer" onClick={() => setSelected(s)}>{s.name}</td>
-                    <td className="px-4 py-4 text-sm text-[#4a4a4a]">{s.email}</td>
-                    <td className="px-4 py-4 text-sm text-[#4a4a4a] hidden lg:table-cell">{s.phone || "—"}</td>
-                    <td className="px-4 py-4 text-sm hidden lg:table-cell">
-                      {s.service ? (
-                        <span className="px-2 py-1 text-[10px] font-mono uppercase tracking-[0.15em] bg-[#ff5722]/10 text-[#ff5722] rounded">
-                          {s.service}
-                        </span>
-                      ) : "—"}
-                    </td>
-                    <td className="px-4 py-4">
-                      <StatusSelect value={s.status} onChange={(v) => changeStatus(s.id, v)} testid={`admin-status-${s.id}`} />
-                    </td>
-                    <td className="px-4 py-4 text-right whitespace-nowrap">
-                      <button
-                        onClick={() => setSelected(s)}
-                        data-testid={`admin-view-${s.id}`}
-                        className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-[0.15em] text-[#ff5722] hover:text-[#0a0a0a]"
-                      >
-                        View →
-                      </button>
-                    </td>
-                  </tr>
+        <nav className="flex-1 overflow-y-auto py-5 px-3">
+          {NAV_GROUPS.map((g) => (
+            <div key={g.label} className="mb-6">
+              <div className="px-3 mb-2 text-[10px] font-mono uppercase tracking-[0.25em] text-[#4a4a4a]/70">
+                {g.label}
+              </div>
+              <ul className="space-y-1">
+                {g.items.map(({ k, label, icon: Icon }) => (
+                  <li key={k}>
+                    <button
+                      onClick={() => { setTab(k); setSidebarOpen(false); }}
+                      data-testid={`admin-nav-${k}`}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm transition-colors ${
+                        tab === k
+                          ? "bg-[#0a0a0a] text-white"
+                          : "text-[#0a0a0a] hover:bg-[#0a0a0a]/5"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      <span className="flex-1 text-left">{label}</span>
+                    </button>
+                  </li>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              </ul>
+            </div>
+          ))}
+        </nav>
 
-        <p className="mt-6 text-xs font-mono text-[#4a4a4a]">
-          Stored in MongoDB · collection: <span className="text-[#0a0a0a]">contact_submissions</span>
-        </p>
-        </>)}
+        <div className="px-5 py-4 border-t border-black/10 flex items-center gap-2">
+          <button
+            onClick={() => setPwModalOpen(true)}
+            data-testid="admin-change-password"
+            className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 text-xs border border-black/15 rounded-full hover:border-[#ff5722] hover:text-[#ff5722] transition-colors"
+          >
+            <KeyRound className="h-3.5 w-3.5" /> Password
+          </button>
+          <button
+            onClick={logout}
+            data-testid="admin-logout"
+            className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 text-xs border border-black/15 rounded-full hover:border-[#0a0a0a] hover:bg-[#0a0a0a] hover:text-white transition-colors"
+          >
+            <LogOut className="h-3.5 w-3.5" /> Sign out
+          </button>
+        </div>
+      </aside>
 
-        {tab === "projects" && (
-          <CrudPanel
-            title="Projects"
-            entityName="projects"
-            fields={PROJECT_FIELDS}
-            {...PROJECT_OPS(token)}
-            rowLabel={(it) => it.title}
-            rowSubtitle={(it) => `${it.client || ""} · ${it.year || ""} · ${it.domain || ""}`}
-            rowMeta={(it) => `Order ${it.display_order} · /projects#${it.slug}`}
-            emptyText="No projects yet. Click New to add your first case study."
-          />
-        )}
+      {/* Sidebar backdrop (mobile) */}
+      {sidebarOpen && (
+        <div onClick={() => setSidebarOpen(false)} className="md:hidden fixed inset-0 z-30 bg-black/40" />
+      )}
 
-        {tab === "knowledge" && (
-          <CrudPanel
-            title="Knowledge Center"
-            entityName="knowledge"
-            fields={ARTICLE_FIELDS}
-            {...ARTICLE_OPS(token)}
-            rowLabel={(it) => `${it.featured ? "★ " : ""}${it.title}`}
-            rowSubtitle={(it) => `${it.category || ""} · ${it.author || ""} · ${it.date || ""}`}
-            rowMeta={(it) => `Order ${it.display_order} · /knowledge/${it.slug}`}
-            emptyText="No essays yet. Click New to publish your first."
-          />
-        )}
+      {/* Main area */}
+      <div className="flex-1 min-w-0">
+        {/* Mobile topbar */}
+        <header className="md:hidden sticky top-0 z-20 bg-white border-b border-black/10 px-4 py-3 flex items-center justify-between">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            data-testid="admin-sidebar-open"
+            className="h-9 w-9 rounded-full border border-black/10 flex items-center justify-center"
+          >
+            <Menu className="h-4 w-4" />
+          </button>
+          <div className="text-sm font-semibold">{LABEL_FOR[tab] || "Admin"}</div>
+          <button
+            onClick={() => tab === "briefings" ? fetchBriefings() : null}
+            data-testid="admin-refresh-mobile"
+            className="h-9 w-9 rounded-full border border-black/10 flex items-center justify-center"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          </button>
+        </header>
 
-        {tab === "careers" && (
-          <CrudPanel
-            title="Careers"
-            entityName="careers"
-            fields={ROLE_FIELDS}
-            {...ROLE_OPS(token)}
-            rowLabel={(it) => `${it.active ? "" : "○ "}${it.title}`}
-            rowSubtitle={(it) => `${it.dept || ""} · ${it.location || ""} · ${it.type || ""}`}
-            rowMeta={(it) => `Order ${it.display_order}${it.active ? "" : " · inactive"}`}
-            emptyText="No roles yet. Click New to add an open position."
-          />
-        )}
-      </main>
+        <main className="px-5 md:px-10 py-8 md:py-12 max-w-[1500px]">
+          {/* Website CMS */}
+          {tab === "briefings" && (
+            <BriefingsView
+              stats={stats}
+              numbered={numbered}
+              loading={loading}
+              q={q}
+              setQ={setQ}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              onOpen={setSelected}
+              onChangeStatus={changeStatus}
+            />
+          )}
+
+          {tab === "projects" && (
+            <CrudPanel
+              title="Projects"
+              entityName="projects"
+              fields={PROJECT_FIELDS}
+              {...PROJECT_OPS(token)}
+              rowLabel={(it) => it.title}
+              rowSubtitle={(it) => `${it.client || ""} · ${it.year || ""} · ${it.domain || ""}`}
+              rowMeta={(it) => `Order ${it.display_order} · /projects#${it.slug}`}
+              emptyText="No projects yet. Click New to add your first case study."
+            />
+          )}
+
+          {tab === "knowledge" && (
+            <CrudPanel
+              title="Knowledge Center"
+              entityName="knowledge"
+              fields={ARTICLE_FIELDS}
+              {...ARTICLE_OPS(token)}
+              rowLabel={(it) => `${it.featured ? "★ " : ""}${it.title}`}
+              rowSubtitle={(it) => `${it.category || ""} · ${it.author || ""} · ${it.date || ""}`}
+              rowMeta={(it) => `Order ${it.display_order} · /knowledge/${it.slug}`}
+              emptyText="No essays yet. Click New to publish your first."
+            />
+          )}
+
+          {tab === "careers" && (
+            <CrudPanel
+              title="Careers"
+              entityName="careers"
+              fields={ROLE_FIELDS}
+              {...ROLE_OPS(token)}
+              rowLabel={(it) => `${it.active ? "" : "○ "}${it.title}`}
+              rowSubtitle={(it) => `${it.dept || ""} · ${it.location || ""} · ${it.type || ""}`}
+              rowMeta={(it) => `Order ${it.display_order}${it.active ? "" : " · inactive"}`}
+              emptyText="No roles yet. Click New to add an open position."
+            />
+          )}
+
+          {/* CRM */}
+          {tab === "crm-analytics"         && <Analytics token={token} />}
+          {tab === "crm-leads"             && <Leads token={token} />}
+          {tab === "crm-vendors"           && <Vendors token={token} />}
+          {tab === "crm-projects"          && <CrmProjects token={token} />}
+          {tab === "crm-tasks"             && <Tasks token={token} />}
+          {tab === "crm-project-payments"  && <ProjectPayments token={token} />}
+          {tab === "crm-reachvel-payments" && <ReachvelPayments token={token} />}
+        </main>
+      </div>
 
       {selected && (
         <DetailModal
@@ -467,6 +426,145 @@ export default function Admin() {
         <ChangePasswordModal token={token} onClose={() => setPwModalOpen(false)} onChanged={() => { setPwModalOpen(false); }} />
       )}
     </div>
+  );
+}
+
+// ───── Briefings (original view, extracted) ─────
+function BriefingsView({ stats, numbered, loading, q, setQ, statusFilter, setStatusFilter, onOpen, onChangeStatus }) {
+  return (
+    <>
+      <div className="flex items-end justify-between gap-4 mb-6">
+        <div>
+          <div className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#ff5722] font-bold">
+            Briefings
+          </div>
+          <h1 className="mt-2 font-display font-black text-4xl md:text-5xl tracking-tighter text-[#0a0a0a]">
+            Client submissions
+          </h1>
+        </div>
+        <div className="text-xs font-mono text-[#4a4a4a]">
+          {numbered.length} shown · {stats.total} total · {loading ? "loading…" : "live"}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-px bg-black/10 border border-black/10 mb-8">
+        <Stat label="Total" value={stats.total} />
+        <Stat label="Today" value={stats.today} />
+        {STATUSES.map((s) => (
+          <Stat key={s.k} label={s.label} value={stats.by_status?.[s.k] ?? 0} dot={s.dot} />
+        ))}
+      </div>
+
+      <div className="flex flex-col md:flex-row md:items-center gap-3 mb-5">
+        <div className="flex items-center gap-2 bg-white border border-black/10 rounded-full px-4 py-2 w-full md:w-96">
+          <Search className="h-4 w-4 text-[#4a4a4a]" />
+          <input
+            data-testid="admin-search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search name, email, phone, company, note…"
+            className="bg-transparent focus:outline-none text-sm flex-1"
+          />
+          {q && (
+            <button
+              onClick={() => setQ("")}
+              data-testid="admin-search-clear"
+              className="text-xs text-[#4a4a4a] hover:text-[#ff5722]"
+            >
+              clear
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+          {[{ k: "all", label: "All", dot: "bg-[#0a0a0a]" }, ...STATUSES].map((s) => (
+            <button
+              key={s.k}
+              data-testid={`admin-filter-${s.k}`}
+              onClick={() => setStatusFilter(s.k)}
+              className={`shrink-0 inline-flex items-center gap-2 px-3 py-2 rounded-full border text-xs font-mono uppercase tracking-[0.15em] transition-colors ${
+                statusFilter === s.k
+                  ? "bg-[#0a0a0a] border-[#0a0a0a] text-white"
+                  : "border-black/15 text-[#4a4a4a] hover:border-[#0a0a0a]"
+              }`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
+              {s.label}
+              {s.k !== "all" && (
+                <span className="opacity-60">{stats.by_status?.[s.k] ?? 0}</span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {numbered.length === 0 ? (
+        <div className="bg-white border border-black/10 p-14 text-center">
+          <div className="font-display font-black text-3xl text-[#0a0a0a]">
+            {q || statusFilter !== "all" ? "No matches." : "No briefings yet."}
+          </div>
+          <div className="mt-3 text-[#4a4a4a]">
+            {q || statusFilter !== "all"
+              ? "Try a different search or filter."
+              : "When someone submits the contact form, they'll appear here."}
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white border border-black/10 overflow-x-auto">
+          <table className="w-full text-left min-w-[900px]">
+            <thead className="bg-[#f7f6f3] border-b border-black/10 text-[11px] font-mono uppercase tracking-[0.2em] text-[#4a4a4a]">
+              <tr>
+                <th className="px-4 py-4 w-12">S.No</th>
+                <th className="px-4 py-4">When</th>
+                <th className="px-4 py-4">Name</th>
+                <th className="px-4 py-4">Email</th>
+                <th className="px-4 py-4 hidden lg:table-cell">Phone</th>
+                <th className="px-4 py-4 hidden lg:table-cell">Service</th>
+                <th className="px-4 py-4">Status</th>
+                <th className="px-4 py-4"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {numbered.map((s) => (
+                <tr
+                  key={s.id}
+                  data-testid={`admin-row-${s.id}`}
+                  className="border-b border-black/5 hover:bg-[#0a0a0a]/[0.02] transition-colors"
+                >
+                  <td className="px-4 py-4 text-xs font-mono text-[#4a4a4a]">{String(s.sno).padStart(2, "0")}</td>
+                  <td className="px-4 py-4 text-xs font-mono text-[#4a4a4a] whitespace-nowrap">{fmtDate(s.created_at)}</td>
+                  <td className="px-4 py-4 font-semibold text-[#0a0a0a] cursor-pointer" onClick={() => onOpen(s)}>{s.name}</td>
+                  <td className="px-4 py-4 text-sm text-[#4a4a4a]">{s.email}</td>
+                  <td className="px-4 py-4 text-sm text-[#4a4a4a] hidden lg:table-cell">{s.phone || "—"}</td>
+                  <td className="px-4 py-4 text-sm hidden lg:table-cell">
+                    {s.service ? (
+                      <span className="px-2 py-1 text-[10px] font-mono uppercase tracking-[0.15em] bg-[#ff5722]/10 text-[#ff5722] rounded">
+                        {s.service}
+                      </span>
+                    ) : "—"}
+                  </td>
+                  <td className="px-4 py-4">
+                    <StatusSelect value={s.status} onChange={(v) => onChangeStatus(s.id, v)} testid={`admin-status-${s.id}`} />
+                  </td>
+                  <td className="px-4 py-4 text-right whitespace-nowrap">
+                    <button
+                      onClick={() => onOpen(s)}
+                      data-testid={`admin-view-${s.id}`}
+                      className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-[0.15em] text-[#ff5722] hover:text-[#0a0a0a]"
+                    >
+                      View →
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <p className="mt-6 text-xs font-mono text-[#4a4a4a]">
+        Stored in MongoDB · collection: <span className="text-[#0a0a0a]">contact_submissions</span>
+      </p>
+    </>
   );
 }
 
