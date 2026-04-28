@@ -4,13 +4,26 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import {
   ArrowUpRight, LogOut, Trash2, RefreshCw, Mail, Phone, Building2, Tag, Wallet,
-  MessageSquare, Search, KeyRound, X,
+  MessageSquare, Search, KeyRound, X, Inbox, Briefcase, BookOpen, Users,
 } from "lucide-react";
 import Logo from "@/components/Logo";
+import CrudPanel from "@/components/admin/CrudPanel";
+import {
+  PROJECT_FIELDS, ARTICLE_FIELDS, ROLE_FIELDS,
+  PROJECT_OPS, ARTICLE_OPS, ROLE_OPS,
+} from "@/components/admin/cmsConfig";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const TOKEN_KEY = "reachvel_admin_token";
+const TAB_KEY = "reachvel_admin_tab";
+
+const TABS = [
+  { k: "briefings", label: "Briefings", icon: Inbox },
+  { k: "projects",  label: "Projects",  icon: Briefcase },
+  { k: "knowledge", label: "Knowledge", icon: BookOpen },
+  { k: "careers",   label: "Careers",   icon: Users },
+];
 
 const STATUSES = [
   { k: "new",        label: "New",        dot: "bg-[#ff5722]"   },
@@ -44,6 +57,9 @@ export default function Admin() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selected, setSelected] = useState(null);
   const [pwModalOpen, setPwModalOpen] = useState(false);
+  const [tab, setTab] = useState(() => localStorage.getItem(TAB_KEY) || "briefings");
+
+  useEffect(() => { localStorage.setItem(TAB_KEY, tab); }, [tab]);
 
   const debounceRef = useRef(null);
 
@@ -242,7 +258,28 @@ export default function Admin() {
         </div>
       </header>
 
+      {/* Tabs */}
+      <div className="border-b border-black/10 bg-white">
+        <div className="mx-auto max-w-[1400px] px-5 md:px-10 flex items-center gap-1 overflow-x-auto no-scrollbar">
+          {TABS.map(({ k, label, icon: Icon }) => (
+            <button
+              key={k}
+              data-testid={`admin-tab-${k}`}
+              onClick={() => setTab(k)}
+              className={`shrink-0 inline-flex items-center gap-2 px-4 md:px-5 py-4 text-sm font-semibold border-b-2 transition-colors ${
+                tab === k
+                  ? "border-[#ff5722] text-[#0a0a0a]"
+                  : "border-transparent text-[#4a4a4a] hover:text-[#0a0a0a]"
+              }`}
+            >
+              <Icon className="h-4 w-4" /> {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <main className="mx-auto max-w-[1400px] px-5 md:px-10 py-8 md:py-12">
+        {tab === "briefings" && (<>
         <div className="flex items-end justify-between gap-4 mb-6">
           <div>
             <div className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#ff5722] font-bold">
@@ -376,6 +413,46 @@ export default function Admin() {
         <p className="mt-6 text-xs font-mono text-[#4a4a4a]">
           Stored in MongoDB · collection: <span className="text-[#0a0a0a]">contact_submissions</span>
         </p>
+        </>)}
+
+        {tab === "projects" && (
+          <CrudPanel
+            title="Projects"
+            entityName="projects"
+            fields={PROJECT_FIELDS}
+            {...PROJECT_OPS(token)}
+            rowLabel={(it) => it.title}
+            rowSubtitle={(it) => `${it.client || ""} · ${it.year || ""} · ${it.domain || ""}`}
+            rowMeta={(it) => `Order ${it.display_order} · /projects#${it.slug}`}
+            emptyText="No projects yet. Click New to add your first case study."
+          />
+        )}
+
+        {tab === "knowledge" && (
+          <CrudPanel
+            title="Knowledge Center"
+            entityName="knowledge"
+            fields={ARTICLE_FIELDS}
+            {...ARTICLE_OPS(token)}
+            rowLabel={(it) => `${it.featured ? "★ " : ""}${it.title}`}
+            rowSubtitle={(it) => `${it.category || ""} · ${it.author || ""} · ${it.date || ""}`}
+            rowMeta={(it) => `Order ${it.display_order} · /knowledge/${it.slug}`}
+            emptyText="No essays yet. Click New to publish your first."
+          />
+        )}
+
+        {tab === "careers" && (
+          <CrudPanel
+            title="Careers"
+            entityName="careers"
+            fields={ROLE_FIELDS}
+            {...ROLE_OPS(token)}
+            rowLabel={(it) => `${it.active ? "" : "○ "}${it.title}`}
+            rowSubtitle={(it) => `${it.dept || ""} · ${it.location || ""} · ${it.type || ""}`}
+            rowMeta={(it) => `Order ${it.display_order}${it.active ? "" : " · inactive"}`}
+            emptyText="No roles yet. Click New to add an open position."
+          />
+        )}
       </main>
 
       {selected && (

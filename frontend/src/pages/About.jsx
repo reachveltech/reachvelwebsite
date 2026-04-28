@@ -2,12 +2,18 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import SectionLabel from "@/components/SectionLabel";
+import Seo from "@/components/Seo";
 import { AboutAtom } from "@/components/AtomicArt";
 import { VALUES, STATS, LEADERSHIP } from "@/lib/data";
 
 export default function About() {
   return (
     <div data-testid="page-about" className="bg-[#f7f6f3]">
+      <Seo
+        title="About — engineers, scientists & craftspeople"
+        description="Reachvel was founded on a stubborn belief: the boundary between design, engineering and intelligence was a staffing problem — not a technical one."
+        path="/about"
+      />
       {/* Hero */}
       <section className="relative overflow-hidden pt-[140px] md:pt-[180px] pb-20 md:pb-24">
         <div className="hero-grid absolute inset-0 opacity-50 pointer-events-none" />

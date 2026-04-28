@@ -1,24 +1,39 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Play } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import SectionLabel from "@/components/SectionLabel";
+import Seo from "@/components/Seo";
 import { ProjectsAtom } from "@/components/AtomicArt";
-import { PROJECTS } from "@/lib/data";
+import { fetchProjects } from "@/lib/api";
 
 const FILTERS = ["All", "Fintech", "Healthcare", "Retail", "Data", "AI"];
 
 export default function Projects() {
   const [filter, setFilter] = useState("All");
   const [active, setActive] = useState(null);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProjects()
+      .then((d) => setItems(d || []))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, []);
 
   const filtered = useMemo(
-    () => (filter === "All" ? PROJECTS : PROJECTS.filter((p) => p.domain === filter)),
-    [filter]
+    () => (filter === "All" ? items : items.filter((p) => p.domain === filter)),
+    [filter, items]
   );
 
   return (
     <div data-testid="page-projects" className="bg-[#050505] text-white relative overflow-hidden">
+      <Seo
+        title="Projects — selected case studies"
+        description="A slice of the AI, Web and Mobile systems Reachvel has shipped for category-defining companies in fintech, healthcare, retail, and data."
+        path="/projects"
+      />
       <div className="hero-grid-dark fixed inset-0 opacity-20 pointer-events-none" />
       <div className="grain fixed inset-0" />
 
@@ -65,7 +80,7 @@ export default function Projects() {
             </button>
           ))}
           <div className="ml-auto hidden md:block text-[11px] font-mono text-white/40">
-            {filtered.length} of {PROJECTS.length}
+            {filtered.length} of {items.length}{loading ? " · loading…" : ""}
           </div>
         </div>
       </section>

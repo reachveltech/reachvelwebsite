@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowUpRight, MapPin, Clock, X } from "lucide-react";
 import { toast } from "sonner";
 import Reveal from "@/components/Reveal";
 import SectionLabel from "@/components/SectionLabel";
+import Seo from "@/components/Seo";
 import { CareersAtom } from "@/components/AtomicArt";
-import { ROLES, BENEFITS } from "@/lib/data";
+import { fetchRoles } from "@/lib/api";
+import { BENEFITS } from "@/lib/data";
 
 function RoleApplyDialog({ role, onClose }) {
   const [form, setForm] = useState({ name: "", email: "", linkedin: "", note: "" });
@@ -106,16 +108,26 @@ function RoleApplyDialog({ role, onClose }) {
 
 export default function Careers() {
   const [activeRole, setActiveRole] = useState(null);
+  const [roles, setRoles] = useState([]);
+
+  useEffect(() => {
+    fetchRoles().then((d) => setRoles(d || [])).catch(() => setRoles([]));
+  }, []);
 
   return (
     <div data-testid="page-careers" className="bg-[#f7f6f3]">
+      <Seo
+        title={`Careers — ${roles.length ? `${roles.length} open roles` : "join the studio"}`}
+        description="Build a career worth the craft. Reachvel hires across engineering, design, AI, and brand — remote-first, globally paid, profit-shared."
+        path="/careers"
+      />
       {/* Hero */}
       <section className="relative overflow-hidden pt-[140px] md:pt-[180px] pb-16 md:pb-24">
         <div className="hero-grid absolute inset-0 opacity-50 pointer-events-none" />
         <CareersAtom className="hidden lg:block absolute right-[-60px] top-[60px] h-[560px] w-[560px] opacity-80 pointer-events-none z-[5]" />
         <div className="relative mx-auto max-w-[1400px] px-5 md:px-10">
           <Reveal>
-            <SectionLabel>Careers · 8 Open Roles</SectionLabel>
+            <SectionLabel>Careers · {roles.length} Open Roles</SectionLabel>
           </Reveal>
           <Reveal delay={80}>
             <h1 className="mt-6 font-display font-black text-6xl sm:text-7xl md:text-8xl lg:text-[9.5rem] tracking-[-0.04em] leading-[0.9] text-[#0a0a0a] max-w-6xl">
@@ -205,12 +217,12 @@ export default function Careers() {
             </div>
             <div className="hidden md:flex items-center gap-2 text-xs font-mono text-[#4a4a4a]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#ff5722] animate-pulse-dot" />
-              {ROLES.length} positions · Global
+              {roles.length} positions · Global
             </div>
           </div>
 
           <div className="border-t border-black/10">
-            {ROLES.map((r) => (
+            {roles.map((r) => (
               <button
                 key={r.id}
                 data-testid={`role-${r.id}`}

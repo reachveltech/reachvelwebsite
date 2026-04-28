@@ -17,6 +17,8 @@ from typing import List, Optional
 import uuid
 from datetime import datetime, timezone, timedelta
 
+from seed_data import PROJECTS_SEED, ARTICLES_SEED, ROLES_SEED
+
 
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
@@ -56,7 +58,13 @@ def client_ip(request: Request) -> str:
     return request.client.host if request.client else 'unknown'
 
 
-# ───────────────── Models ─────────────────
+def slugify(value: str) -> str:
+    value = (value or "").strip().lower()
+    value = re.sub(r'[^a-z0-9]+', '-', value)
+    return value.strip('-') or str(uuid.uuid4())[:8]
+
+
+# ───────────────── Models — Contact ─────────────────
 class ContactIn(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     email: EmailStr
@@ -100,16 +108,81 @@ class StatusUpdateIn(BaseModel):
     status: str
 
 
+# ───────────────── Models — CMS ─────────────────
+class Metric(BaseModel):
+    k: str
+    v: str
+
+
+class ProjectIn(BaseModel):
+    slug: Optional[str] = ""
+    title: str = Field(min_length=1, max_length=200)
+    client: str = Field(default="", max_length=200)
+    domain: str = Field(default="", max_length=80)
+    year: str = Field(default="", max_length=16)
+    summary: str = Field(default="", max_length=2000)
+    cover: str = Field(default="", max_length=1000)
+    video: str = Field(default="", max_length=1000)
+    services: List[str] = Field(default_factory=list)
+    metrics: List[Metric] = Field(default_factory=list)
+    display_order: int = 0
+
+
+class Project(ProjectIn):
+    id: str
+    slug: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class ArticleIn(BaseModel):
+    slug: Optional[str] = ""
+    title: str = Field(min_length=1, max_length=300)
+    excerpt: str = Field(default="", max_length=600)
+    category: str = Field(default="", max_length=80)
+    date: str = Field(default="", max_length=40)
+    read_time: str = Field(default="", max_length=20)
+    author: str = Field(default="", max_length=120)
+    cover: str = Field(default="", max_length=1000)
+    body: List[str] = Field(default_factory=list)
+    featured: bool = False
+    display_order: int = 0
+
+
+class Article(ArticleIn):
+    id: str
+    slug: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class RoleIn(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    dept: str = Field(default="", max_length=80)
+    location: str = Field(default="", max_length=200)
+    type: str = Field(default="", max_length=40)
+    description: str = Field(default="", max_length=2000)
+    active: bool = True
+    display_order: int = 0
+
+
+class Role(RoleIn):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+
+
 # ───────────────── Startup: seed + indexes ─────────────────
 @app.on_event("startup")
-async def seed_admin_and_indexes():
-    # indexes
+async def seed_everything():
     await db.contact_submissions.create_index("created_at")
     await db.admin_sessions.create_index("token", unique=True)
     await db.login_attempts.create_index("ip")
     await db.login_attempts.create_index("created_at")
+    await db.projects.create_index("slug", unique=True)
+    await db.articles.create_index("slug", unique=True)
 
-    # seed admin config if missing
+    # admin seed
     doc = await db.admin_config.find_one({"key": "password_hash"})
     if not doc:
         await db.admin_config.insert_one({
@@ -117,52 +190,95 @@ async def seed_admin_and_indexes():
             "value": hash_password(SEED_ADMIN_PASSWORD),
             "updated_at": now_iso(),
         })
-        logging.info("Seeded admin password hash from env.")
 
-    # migrate any existing contact submissions without a status
     await db.contact_submissions.update_many(
         {"status": {"$exists": False}},
         {"$set": {"status": "new"}},
     )
+
+    # content seeds — only if collection is empty
+    if await db.projects.count_documents({}) == 0:
+        for i, p in enumerate(PROJECTS_SEED):
+            await db.projects.insert_one({
+                "id": str(uuid.uuid4()),
+                "slug": p["slug"],
+                "title": p["title"],
+                "client": p["client"],
+                "domain": p["domain"],
+                "year": p["year"],
+                "summary": p["summary"],
+                "cover": p["cover"],
+                "video": p["video"],
+                "services": p["services"],
+                "metrics": p["metrics"],
+                "display_order": i,
+                "created_at": now_iso(),
+                "updated_at": now_iso(),
+            })
+        logging.info(f"Seeded {len(PROJECTS_SEED)} projects.")
+
+    if await db.articles.count_documents({}) == 0:
+        for i, a in enumerate(ARTICLES_SEED):
+            await db.articles.insert_one({
+                "id": str(uuid.uuid4()),
+                "slug": a["slug"],
+                "title": a["title"],
+                "excerpt": a["excerpt"],
+                "category": a["category"],
+                "date": a["date"],
+                "read_time": a["read_time"],
+                "author": a["author"],
+                "cover": a["cover"],
+                "body": a["body"],
+                "featured": a.get("featured", False),
+                "display_order": i,
+                "created_at": now_iso(),
+                "updated_at": now_iso(),
+            })
+        logging.info(f"Seeded {len(ARTICLES_SEED)} articles.")
+
+    if await db.roles.count_documents({}) == 0:
+        for i, r in enumerate(ROLES_SEED):
+            await db.roles.insert_one({
+                "id": str(uuid.uuid4()),
+                "title": r["title"],
+                "dept": r["dept"],
+                "location": r["location"],
+                "type": r["type"],
+                "description": r["description"],
+                "active": True,
+                "display_order": i,
+                "created_at": now_iso(),
+                "updated_at": now_iso(),
+            })
+        logging.info(f"Seeded {len(ROLES_SEED)} roles.")
 
 
 # ───────────────── Rate limit ─────────────────
 async def check_rate_limit(ip: str):
     window_start = datetime.now(timezone.utc) - timedelta(minutes=ATTEMPT_WINDOW_MIN)
     fails = await db.login_attempts.count_documents({
-        "ip": ip,
-        "success": False,
+        "ip": ip, "success": False,
         "created_at": {"$gte": window_start.isoformat()},
     })
     if fails >= MAX_LOGIN_ATTEMPTS:
-        # find the most recent failure; lockout from there for LOCKOUT_MIN
         last = await db.login_attempts.find_one(
-            {"ip": ip, "success": False},
-            sort=[("created_at", -1)],
+            {"ip": ip, "success": False}, sort=[("created_at", -1)],
         )
         if last:
             last_at = datetime.fromisoformat(last["created_at"])
             unlock_at = last_at + timedelta(minutes=LOCKOUT_MIN)
             if datetime.now(timezone.utc) < unlock_at:
                 retry_in = int((unlock_at - datetime.now(timezone.utc)).total_seconds())
-                raise HTTPException(
-                    status_code=429,
-                    detail=f"Too many attempts. Try again in {retry_in}s.",
-                )
+                raise HTTPException(status_code=429, detail=f"Too many attempts. Try again in {retry_in}s.")
 
 
 async def log_attempt(ip: str, success: bool):
-    await db.login_attempts.insert_one({
-        "ip": ip,
-        "success": success,
-        "created_at": now_iso(),
-    })
+    await db.login_attempts.insert_one({"ip": ip, "success": success, "created_at": now_iso()})
     if success:
-        # clear failure history for this ip on success
         await db.login_attempts.delete_many({"ip": ip, "success": False})
 
 
-# ───────────────── Auth dependency ─────────────────
 async def require_admin(x_admin_token: str = Header(default="")) -> dict:
     if not x_admin_token:
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -173,7 +289,6 @@ async def require_admin(x_admin_token: str = Header(default="")) -> dict:
     if isinstance(expires_at, str):
         expires_at = datetime.fromisoformat(expires_at)
     if expires_at is not None:
-        # normalize to tz-aware UTC for comparison
         if expires_at.tzinfo is None:
             expires_at = expires_at.replace(tzinfo=timezone.utc)
         if expires_at < datetime.now(timezone.utc):
@@ -182,7 +297,7 @@ async def require_admin(x_admin_token: str = Header(default="")) -> dict:
     return {"token": x_admin_token}
 
 
-# ───────────────── Routes ─────────────────
+# ───────────────── Public routes ─────────────────
 @api_router.get("/")
 async def root():
     return {"message": "Reachvel API"}
@@ -208,6 +323,48 @@ async def submit_contact(payload: ContactIn):
     return ContactSubmission(**sub)
 
 
+@api_router.get("/projects")
+async def list_projects():
+    items = await db.projects.find({}, {"_id": 0}).sort("display_order", 1).to_list(500)
+    for it in items:
+        for k in ("created_at", "updated_at"):
+            if isinstance(it.get(k), str):
+                it[k] = datetime.fromisoformat(it[k])
+    return items
+
+
+@api_router.get("/articles")
+async def list_articles():
+    items = await db.articles.find({}, {"_id": 0}).sort("display_order", 1).to_list(500)
+    for it in items:
+        for k in ("created_at", "updated_at"):
+            if isinstance(it.get(k), str):
+                it[k] = datetime.fromisoformat(it[k])
+    return items
+
+
+@api_router.get("/articles/{slug}")
+async def get_article(slug: str):
+    item = await db.articles.find_one({"slug": slug}, {"_id": 0})
+    if not item:
+        raise HTTPException(status_code=404, detail="Not found")
+    for k in ("created_at", "updated_at"):
+        if isinstance(item.get(k), str):
+            item[k] = datetime.fromisoformat(item[k])
+    return item
+
+
+@api_router.get("/roles")
+async def list_roles_public():
+    items = await db.roles.find({"active": True}, {"_id": 0}).sort("display_order", 1).to_list(500)
+    for it in items:
+        for k in ("created_at", "updated_at"):
+            if isinstance(it.get(k), str):
+                it[k] = datetime.fromisoformat(it[k])
+    return items
+
+
+# ───────────────── Admin — auth ─────────────────
 @api_router.post("/admin/login", response_model=AdminLoginOut)
 async def admin_login(payload: AdminLoginIn, request: Request):
     ip = client_ip(request)
@@ -220,10 +377,8 @@ async def admin_login(payload: AdminLoginIn, request: Request):
     token = secrets.token_urlsafe(40)
     expires_at = datetime.now(timezone.utc) + timedelta(hours=SESSION_TTL_HOURS)
     await db.admin_sessions.insert_one({
-        "token": token,
-        "created_at": now_iso(),
-        "expires_at": expires_at.isoformat(),
-        "ip": ip,
+        "token": token, "created_at": now_iso(),
+        "expires_at": expires_at.isoformat(), "ip": ip,
     })
     return AdminLoginOut(token=token, expires_at=expires_at)
 
@@ -245,31 +400,20 @@ async def rotate_password(payload: RotatePasswordIn, session=Depends(require_adm
         {"key": "password_hash"},
         {"$set": {"value": hash_password(payload.new_password), "updated_at": now_iso()}},
     )
-    # invalidate all other sessions, keep current one valid
     await db.admin_sessions.delete_many({"token": {"$ne": session["token"]}})
     return {"ok": True}
 
 
+# ───────────────── Admin — briefings ─────────────────
 @api_router.get("/admin/submissions", response_model=List[ContactSubmission])
-async def list_submissions(
-    q: Optional[str] = None,
-    status: Optional[str] = None,
-    _: dict = Depends(require_admin),
-):
+async def list_submissions(q: Optional[str] = None, status: Optional[str] = None, _: dict = Depends(require_admin)):
     query = {}
     if status and status != "all":
         query["status"] = status
     if q:
-        pattern = re.escape(q)
-        regex = {"$regex": pattern, "$options": "i"}
-        query["$or"] = [
-            {"name": regex},
-            {"email": regex},
-            {"phone": regex},
-            {"company": regex},
-            {"note": regex},
-            {"service": regex},
-        ]
+        regex = {"$regex": re.escape(q), "$options": "i"}
+        query["$or"] = [{"name": regex}, {"email": regex}, {"phone": regex},
+                        {"company": regex}, {"note": regex}, {"service": regex}]
     subs = await db.contact_submissions.find(query, {"_id": 0}).sort("created_at", -1).to_list(2000)
     for s in subs:
         if isinstance(s.get('created_at'), str):
@@ -283,8 +427,7 @@ async def update_submission_status(sub_id: str, payload: StatusUpdateIn, _: dict
     if payload.status not in ALLOWED_STATUSES:
         raise HTTPException(status_code=400, detail=f"Status must be one of: {sorted(ALLOWED_STATUSES)}")
     res = await db.contact_submissions.update_one(
-        {"id": sub_id},
-        {"$set": {"status": payload.status, "updated_at": now_iso()}},
+        {"id": sub_id}, {"$set": {"status": payload.status, "updated_at": now_iso()}},
     )
     if res.matched_count == 0:
         raise HTTPException(status_code=404, detail="Not found")
@@ -299,15 +442,170 @@ async def admin_stats(_: dict = Depends(require_admin)):
     total = await db.contact_submissions.count_documents({})
     today_iso = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
     today = await db.contact_submissions.count_documents({"created_at": {"$gte": today_iso}})
-    by_status = {}
-    for s in ALLOWED_STATUSES:
-        by_status[s] = await db.contact_submissions.count_documents({"status": s})
-    return {"total": total, "today": today, "by_status": by_status}
+    by_status = {s: await db.contact_submissions.count_documents({"status": s}) for s in ALLOWED_STATUSES}
+    projects_count = await db.projects.count_documents({})
+    articles_count = await db.articles.count_documents({})
+    roles_count = await db.roles.count_documents({"active": True})
+    return {
+        "total": total, "today": today, "by_status": by_status,
+        "projects": projects_count, "articles": articles_count, "roles_active": roles_count,
+    }
 
 
 @api_router.delete("/admin/submissions/{sub_id}")
 async def delete_submission(sub_id: str, _: dict = Depends(require_admin)):
     res = await db.contact_submissions.delete_one({"id": sub_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Not found")
+    return {"ok": True}
+
+
+# ───────────────── Admin — Projects CRUD ─────────────────
+async def _ensure_unique_slug(collection, slug: str, ignore_id: Optional[str] = None) -> str:
+    base = slug
+    i = 2
+    query = {"slug": slug}
+    if ignore_id:
+        query["id"] = {"$ne": ignore_id}
+    while await collection.find_one(query):
+        slug = f"{base}-{i}"
+        i += 1
+        query = {"slug": slug}
+        if ignore_id:
+            query["id"] = {"$ne": ignore_id}
+    return slug
+
+
+@api_router.get("/admin/projects")
+async def admin_list_projects(_: dict = Depends(require_admin)):
+    items = await db.projects.find({}, {"_id": 0}).sort("display_order", 1).to_list(1000)
+    for it in items:
+        for k in ("created_at", "updated_at"):
+            if isinstance(it.get(k), str):
+                it[k] = datetime.fromisoformat(it[k])
+    return items
+
+
+@api_router.post("/admin/projects")
+async def admin_create_project(payload: ProjectIn, _: dict = Depends(require_admin)):
+    slug = payload.slug.strip() if payload.slug else slugify(payload.title)
+    slug = await _ensure_unique_slug(db.projects, slug)
+    doc = payload.model_dump()
+    doc["slug"] = slug
+    doc["id"] = str(uuid.uuid4())
+    doc["created_at"] = now_iso()
+    doc["updated_at"] = now_iso()
+    doc["metrics"] = [m if isinstance(m, dict) else m.model_dump() for m in payload.metrics]
+    await db.projects.insert_one(dict(doc))
+    return await db.projects.find_one({"id": doc["id"]}, {"_id": 0})
+
+
+@api_router.put("/admin/projects/{pid}")
+async def admin_update_project(pid: str, payload: ProjectIn, _: dict = Depends(require_admin)):
+    existing = await db.projects.find_one({"id": pid})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Not found")
+    slug = payload.slug.strip() if payload.slug else slugify(payload.title)
+    if slug != existing.get("slug"):
+        slug = await _ensure_unique_slug(db.projects, slug, ignore_id=pid)
+    updates = payload.model_dump()
+    updates["slug"] = slug
+    updates["metrics"] = [m if isinstance(m, dict) else m.model_dump() for m in payload.metrics]
+    updates["updated_at"] = now_iso()
+    await db.projects.update_one({"id": pid}, {"$set": updates})
+    return await db.projects.find_one({"id": pid}, {"_id": 0})
+
+
+@api_router.delete("/admin/projects/{pid}")
+async def admin_delete_project(pid: str, _: dict = Depends(require_admin)):
+    res = await db.projects.delete_one({"id": pid})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Not found")
+    return {"ok": True}
+
+
+# ───────────────── Admin — Articles CRUD ─────────────────
+@api_router.get("/admin/articles")
+async def admin_list_articles(_: dict = Depends(require_admin)):
+    items = await db.articles.find({}, {"_id": 0}).sort("display_order", 1).to_list(1000)
+    for it in items:
+        for k in ("created_at", "updated_at"):
+            if isinstance(it.get(k), str):
+                it[k] = datetime.fromisoformat(it[k])
+    return items
+
+
+@api_router.post("/admin/articles")
+async def admin_create_article(payload: ArticleIn, _: dict = Depends(require_admin)):
+    slug = payload.slug.strip() if payload.slug else slugify(payload.title)
+    slug = await _ensure_unique_slug(db.articles, slug)
+    doc = payload.model_dump()
+    doc["slug"] = slug
+    doc["id"] = str(uuid.uuid4())
+    doc["created_at"] = now_iso()
+    doc["updated_at"] = now_iso()
+    await db.articles.insert_one(dict(doc))
+    return await db.articles.find_one({"id": doc["id"]}, {"_id": 0})
+
+
+@api_router.put("/admin/articles/{aid}")
+async def admin_update_article(aid: str, payload: ArticleIn, _: dict = Depends(require_admin)):
+    existing = await db.articles.find_one({"id": aid})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Not found")
+    slug = payload.slug.strip() if payload.slug else slugify(payload.title)
+    if slug != existing.get("slug"):
+        slug = await _ensure_unique_slug(db.articles, slug, ignore_id=aid)
+    updates = payload.model_dump()
+    updates["slug"] = slug
+    updates["updated_at"] = now_iso()
+    await db.articles.update_one({"id": aid}, {"$set": updates})
+    return await db.articles.find_one({"id": aid}, {"_id": 0})
+
+
+@api_router.delete("/admin/articles/{aid}")
+async def admin_delete_article(aid: str, _: dict = Depends(require_admin)):
+    res = await db.articles.delete_one({"id": aid})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Not found")
+    return {"ok": True}
+
+
+# ───────────────── Admin — Roles CRUD ─────────────────
+@api_router.get("/admin/roles")
+async def admin_list_roles(_: dict = Depends(require_admin)):
+    items = await db.roles.find({}, {"_id": 0}).sort("display_order", 1).to_list(1000)
+    for it in items:
+        for k in ("created_at", "updated_at"):
+            if isinstance(it.get(k), str):
+                it[k] = datetime.fromisoformat(it[k])
+    return items
+
+
+@api_router.post("/admin/roles")
+async def admin_create_role(payload: RoleIn, _: dict = Depends(require_admin)):
+    doc = payload.model_dump()
+    doc["id"] = str(uuid.uuid4())
+    doc["created_at"] = now_iso()
+    doc["updated_at"] = now_iso()
+    await db.roles.insert_one(dict(doc))
+    return await db.roles.find_one({"id": doc["id"]}, {"_id": 0})
+
+
+@api_router.put("/admin/roles/{rid}")
+async def admin_update_role(rid: str, payload: RoleIn, _: dict = Depends(require_admin)):
+    existing = await db.roles.find_one({"id": rid})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Not found")
+    updates = payload.model_dump()
+    updates["updated_at"] = now_iso()
+    await db.roles.update_one({"id": rid}, {"$set": updates})
+    return await db.roles.find_one({"id": rid}, {"_id": 0})
+
+
+@api_router.delete("/admin/roles/{rid}")
+async def admin_delete_role(rid: str, _: dict = Depends(require_admin)):
+    res = await db.roles.delete_one({"id": rid})
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Not found")
     return {"ok": True}
@@ -323,10 +621,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 

@@ -2,12 +2,18 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight, ArrowRight } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import SectionLabel from "@/components/SectionLabel";
+import Seo from "@/components/Seo";
 import { ServicesAtom } from "@/components/AtomicArt";
 import { SERVICES } from "@/lib/data";
 
 export default function Services() {
   return (
     <div data-testid="page-services" className="bg-[#050505] text-white relative overflow-hidden">
+      <Seo
+        title="Services — Web, Mobile, AI, Commerce, Brand, Data"
+        description="Seven disciplines, one standard. Reachvel ships web engineering, mobile applications, AI automation, commerce, brand systems and data platforms."
+        path="/services"
+      />
       <div className="hero-grid-dark fixed inset-0 opacity-20 pointer-events-none" />
       <div className="grain fixed inset-0" />
 

@@ -1,9 +1,12 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, ArrowRight, Sparkles } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import ClientsMarquee from "@/components/ClientsMarquee";
 import SectionLabel from "@/components/SectionLabel";
-import { SERVICES, STATS, PROJECTS, TESTIMONIALS, APPROACH } from "@/lib/data";
+import Seo from "@/components/Seo";
+import { fetchProjects } from "@/lib/api";
+import { SERVICES, STATS, TESTIMONIALS, APPROACH } from "@/lib/data";
 
 function MoleculeArt() {
   // Physics/chemistry metaphor — the "atomic synthesis" of Reachvel.
@@ -150,8 +153,35 @@ function MoleculeArt() {
 }
 
 export default function Home() {
+  const [projects, setProjects] = useState([]);
+  useEffect(() => {
+    fetchProjects().then((d) => setProjects(d || [])).catch(() => setProjects([]));
+  }, []);
+
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Reachvel",
+    url: "https://reachvel.com",
+    logo: "https://customer-assets.emergentagent.com/job_reachvel-studio/artifacts/elkurlun_For%20Black%20BG.png",
+    sameAs: [],
+    contactPoint: [{
+      "@type": "ContactPoint",
+      contactType: "sales",
+      email: "info@reachvel.com",
+      telephone: "+91-91214-77-117",
+      areaServed: "Worldwide",
+    }],
+  };
+
   return (
     <div data-testid="page-home" className="relative bg-[#f7f6f3]">
+      <Seo
+        title="AI-Native Engineering Studio for Web, Mobile & AI"
+        description="Reachvel builds Web, Mobile and AI systems for companies that refuse to ship the ordinary. We engineer at the boundary between physics and product."
+        path="/"
+        jsonLd={orgJsonLd}
+      />
       {/* HERO */}
       <section className="relative overflow-hidden pt-[120px] md:pt-[160px] pb-24 md:pb-32">
         <div className="hero-grid absolute inset-0 opacity-60 pointer-events-none" />
@@ -334,7 +364,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-            {PROJECTS.slice(0, 4).map((p, i) => {
+            {projects.slice(0, 4).map((p, i) => {
               const spans = ["lg:col-span-7", "lg:col-span-5", "lg:col-span-5", "lg:col-span-7"];
               return (
                 <Reveal key={p.slug} delay={i * 80} className={`${spans[i]}`}>

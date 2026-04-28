@@ -4,6 +4,7 @@ import { ArrowUpRight, Mail, Phone, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import Reveal from "@/components/Reveal";
 import SectionLabel from "@/components/SectionLabel";
+import Seo from "@/components/Seo";
 import { BRAND } from "@/lib/data";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -58,6 +59,11 @@ export default function Contact() {
 
   return (
     <div data-testid="page-contact" className="bg-[#f7f6f3]">
+      <Seo
+        title="Contact — start a project"
+        description="Tell us about the improbable thing. A strategist will reply within 24 hours. Email info@reachvel.com or call +91 91214 77 117."
+        path="/contact"
+      />
       {/* Hero */}
       <section className="relative overflow-hidden pt-[140px] md:pt-[180px] pb-12 md:pb-20">
         <div className="hero-grid absolute inset-0 opacity-50 pointer-events-none" />

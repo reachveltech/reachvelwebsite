@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
+import { HelmetProvider } from "react-helmet-async";
 import { useEffect } from "react";
 import "@/App.css";
 
@@ -52,20 +53,22 @@ function Shell() {
 function App() {
   return (
     <div className="App" data-testid="app-root">
-      <BrowserRouter>
-        <Shell />
-        <Toaster
-          position="bottom-right"
-          toastOptions={{
-            style: {
-              background: "#0a0a0a",
-              color: "#fff",
-              border: "1px solid #1a1a1a",
-              fontFamily: "Outfit, sans-serif",
-            },
-          }}
-        />
-      </BrowserRouter>
+      <HelmetProvider>
+        <BrowserRouter>
+          <Shell />
+          <Toaster
+            position="bottom-right"
+            toastOptions={{
+              style: {
+                background: "#0a0a0a",
+                color: "#fff",
+                border: "1px solid #1a1a1a",
+                fontFamily: "Outfit, sans-serif",
+              },
+            }}
+          />
+        </BrowserRouter>
+      </HelmetProvider>
     </div>
   );
 }

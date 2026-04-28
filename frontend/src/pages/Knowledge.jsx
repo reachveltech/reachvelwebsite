@@ -1,30 +1,42 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Search } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import SectionLabel from "@/components/SectionLabel";
+import Seo from "@/components/Seo";
 import { KnowledgeAtom } from "@/components/AtomicArt";
-import { ARTICLES } from "@/lib/data";
+import { fetchArticles } from "@/lib/api";
 
 const CATS = ["All", "AI", "Web", "Mobile", "Design"];
 
 export default function Knowledge() {
   const [cat, setCat] = useState("All");
   const [q, setQ] = useState("");
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchArticles().then((d) => setArticles(d || [])).catch(() => setArticles([])).finally(() => setLoading(false));
+  }, []);
 
   const filtered = useMemo(() => {
-    return ARTICLES.filter((a) => {
+    return articles.filter((a) => {
       if (cat !== "All" && a.category !== cat) return false;
       if (q && !(`${a.title} ${a.excerpt}`.toLowerCase().includes(q.toLowerCase()))) return false;
       return true;
     });
-  }, [cat, q]);
+  }, [cat, q, articles]);
 
-  const featured = ARTICLES[0];
-  const rest = filtered.filter((a) => a.slug !== featured.slug);
+  const featured = articles.find((a) => a.featured) || articles[0];
+  const rest = filtered.filter((a) => !featured || a.slug !== featured.slug);
 
   return (
     <div data-testid="page-knowledge" className="bg-[#f7f6f3]">
+      <Seo
+        title="Knowledge — Field notes from the frontier"
+        description="Essays, playbooks, and engineering dispatches from Reachvel — on AI, Web, Mobile, and design systems that obey physics."
+        path="/knowledge"
+      />
       {/* Hero */}
       <section className="relative overflow-hidden pt-[140px] md:pt-[180px] pb-16 md:pb-24">
         <div className="hero-grid absolute inset-0 opacity-50 pointer-events-none" />
@@ -50,7 +62,7 @@ export default function Knowledge() {
       </section>
 
       {/* Featured */}
-      {cat === "All" && !q && (
+      {cat === "All" && !q && featured && (
         <section className="bg-white border-y border-black/10">
           <div className="mx-auto max-w-[1400px] px-5 md:px-10 py-14 md:py-20">
             <Link
@@ -75,7 +87,7 @@ export default function Knowledge() {
               </div>
               <div>
                 <div className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#4a4a4a] mb-4">
-                  {featured.date} · {featured.readTime} · {featured.author}
+                  {featured.date} · {featured.read_time} · {featured.author}
                 </div>
                 <h2 className="font-display font-black text-4xl md:text-5xl lg:text-6xl tracking-tighter leading-[0.95] text-[#0a0a0a] group-hover:text-[#ff5722] transition-colors">
                   {featured.title}
@@ -129,8 +141,10 @@ export default function Knowledge() {
         <div className="mx-auto max-w-[1400px] px-5 md:px-10">
           {rest.length === 0 ? (
             <div className="py-20 text-center text-[#4a4a4a]">
-              <div className="font-display font-black text-4xl text-[#0a0a0a]">No essays match.</div>
-              <div className="mt-3">Try a different category or query.</div>
+              <div className="font-display font-black text-4xl text-[#0a0a0a]">
+                {loading ? "Loading…" : "No essays match."}
+              </div>
+              {!loading && <div className="mt-3">Try a different category or query.</div>}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
@@ -156,7 +170,7 @@ export default function Knowledge() {
                     </div>
                     <div className="pt-5">
                       <div className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#4a4a4a] mb-3">
-                        {a.date} · {a.readTime}
+                        {a.date} · {a.read_time}
                       </div>
                       <h3 className="font-display font-extrabold text-2xl tracking-tight text-[#0a0a0a] group-hover:text-[#ff5722] transition-colors">
                         {a.title}
