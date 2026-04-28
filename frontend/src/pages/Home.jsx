@@ -140,12 +140,12 @@ function MoleculeArt() {
 
       {/* Floating labels */}
       <g fontFamily="JetBrains Mono, monospace" fontSize="10" fill="#0a0a0a" opacity="0.5">
+        <text x="312" y="55">Python</text>
         <text x="320" y="184">AI</text>
         <text x="215" y="250">React</text>
         <text x="415" y="250">Swift</text>
         <text x="215" y="365">LLM</text>
         <text x="410" y="365">Node</text>
-        <text x="455" y="310">Python</text>
         <text x="318" y="448" fontWeight="700" fill="#ff5722" opacity="1">Reachvel</text>
       </g>
     </svg>
