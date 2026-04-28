@@ -291,7 +291,7 @@ export default function Admin() {
                 {g.items.map(({ k, label, icon: Icon }) => (
                   <li key={k}>
                     <button
-                      onClick={() => { setTab(k); setSidebarOpen(false); }}
+                      onClick={() => setTab(k)}
                       data-testid={`admin-nav-${k}`}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm transition-colors ${
                         tab === k
