@@ -246,27 +246,32 @@ export default function Home() {
 
         {/* ticker strip */}
         <div className="relative mt-10 border-y border-black/10 bg-white/60 backdrop-blur">
-          <div className="mx-auto max-w-[1400px] px-5 md:px-10 h-12 flex items-center gap-10 overflow-hidden">
-            <span className="text-[11px] uppercase tracking-[0.3em] font-bold text-[#ff5722] whitespace-nowrap">
-              Live signal
-            </span>
-            <div className="flex items-center gap-10 animate-marquee whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.2em] text-[#0a0a0a]">
-              {[
-                "Shipping · Vault iOS 4.2",
-                "Deploying · Helix RAG v3",
-                "Evaluating · Mira Agent",
-                "Scaling · Atlas Warehouse",
-                "Optimizing · Noor LCP 1.1s",
-                "Shipping · Vault iOS 4.2",
-                "Deploying · Helix RAG v3",
-                "Evaluating · Mira Agent",
-                "Scaling · Atlas Warehouse",
-                "Optimizing · Noor LCP 1.1s",
-              ].map((x, i) => (
-                <span key={i} className="flex items-center gap-3">
-                  <span className="h-1 w-1 rounded-full bg-[#ff5722]" /> {x}
-                </span>
-              ))}
+          <div className="mx-auto max-w-[1400px] px-5 md:px-10 h-12 flex items-center overflow-hidden">
+            <div className="relative z-10 pr-5 mr-2 bg-white/90 backdrop-blur shadow-[8px_0_12px_-8px_rgba(255,255,255,0.95)]">
+              <span className="text-[11px] uppercase tracking-[0.3em] font-bold text-[#ff5722] whitespace-nowrap inline-flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#ff5722] animate-pulse-dot" />
+                Live signal
+              </span>
+            </div>
+            <div className="flex-1 overflow-hidden relative">
+              <div className="flex items-center gap-10 animate-marquee whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.2em] text-[#0a0a0a]">
+                {[
+                  "Shipping · Vault iOS 4.2",
+                  "Deploying · Helix RAG v3",
+                  "Evaluating · Mira Agent",
+                  "Scaling · Atlas Warehouse",
+                  "Optimizing · Noor LCP 1.1s",
+                  "Shipping · Vault iOS 4.2",
+                  "Deploying · Helix RAG v3",
+                  "Evaluating · Mira Agent",
+                  "Scaling · Atlas Warehouse",
+                  "Optimizing · Noor LCP 1.1s",
+                ].map((x, i) => (
+                  <span key={i} className="flex items-center gap-3">
+                    <span className="h-1 w-1 rounded-full bg-[#ff5722]" /> {x}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
