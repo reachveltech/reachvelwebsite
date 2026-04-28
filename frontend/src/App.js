@@ -6,6 +6,7 @@ import "@/App.css";
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ScrollIntentLeadForm from "@/components/ScrollIntentLeadForm";
 
 import Home from "@/pages/Home";
 import About from "@/pages/About";
@@ -46,6 +47,7 @@ function Shell() {
         </Routes>
       </main>
       {!isAdmin && <Footer />}
+      {!isAdmin && <ScrollIntentLeadForm />}
     </>
   );
 }
