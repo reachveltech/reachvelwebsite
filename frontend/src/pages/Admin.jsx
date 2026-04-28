@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import {
   ArrowUpRight, LogOut, Trash2, RefreshCw, Mail, Phone, Building2, Tag, Wallet,
   MessageSquare, Search, KeyRound, X, Inbox, Briefcase, BookOpen, Users,
-  LayoutDashboard, UserCircle2, Truck, FolderKanban, ListChecks, Coins, Receipt, Menu,
+  LayoutDashboard, UserCircle2, Truck, FolderKanban, ListChecks, Coins, Receipt,
+  PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import CrudPanel from "@/components/admin/CrudPanel";
@@ -90,7 +91,10 @@ export default function Admin() {
     const saved = localStorage.getItem(TAB_KEY);
     return saved && ALL_TABS.includes(saved) ? saved : "briefings";
   });
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== "undefined") return window.innerWidth >= 768;
+    return true;
+  });
 
   useEffect(() => { localStorage.setItem(TAB_KEY, tab); }, [tab]);
 
@@ -258,9 +262,9 @@ export default function Admin() {
     <div data-testid="page-admin-dashboard" className="min-h-screen bg-[#f7f6f3] flex">
       {/* Sidebar */}
       <aside
-        className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0
+        className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full md:w-0 md:border-r-0"}
                     fixed md:sticky top-0 left-0 z-40 h-screen w-72 shrink-0
-                    bg-white border-r border-black/10 transition-transform flex flex-col`}
+                    bg-white border-r border-black/10 transition-all duration-300 flex flex-col overflow-hidden`}
       >
         <div className="px-5 py-5 border-b border-black/10 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
@@ -270,7 +274,8 @@ export default function Admin() {
           <button
             onClick={() => setSidebarOpen(false)}
             data-testid="admin-sidebar-close"
-            className="md:hidden h-8 w-8 rounded-full border border-black/10 flex items-center justify-center"
+            className="h-8 w-8 rounded-full border border-black/10 flex items-center justify-center hover:bg-[#0a0a0a] hover:text-white transition-colors"
+            title="Hide sidebar"
           >
             <X className="h-4 w-4" />
           </button>
@@ -322,27 +327,32 @@ export default function Admin() {
         </div>
       </aside>
 
-      {/* Sidebar backdrop (mobile) */}
+      {/* Sidebar backdrop (mobile only — closes when clicked) */}
       {sidebarOpen && (
         <div onClick={() => setSidebarOpen(false)} className="md:hidden fixed inset-0 z-30 bg-black/40" />
       )}
 
       {/* Main area */}
       <div className="flex-1 min-w-0">
-        {/* Mobile topbar */}
-        <header className="md:hidden sticky top-0 z-20 bg-white border-b border-black/10 px-4 py-3 flex items-center justify-between">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            data-testid="admin-sidebar-open"
-            className="h-9 w-9 rounded-full border border-black/10 flex items-center justify-center"
-          >
-            <Menu className="h-4 w-4" />
-          </button>
-          <div className="text-sm font-semibold">{LABEL_FOR[tab] || "Admin"}</div>
+        {/* Topbar (always visible) — sidebar toggle + page title + refresh */}
+        <header className="sticky top-0 z-20 bg-white border-b border-black/10 px-4 md:px-6 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              onClick={() => setSidebarOpen((v) => !v)}
+              data-testid="admin-sidebar-toggle"
+              className="h-9 w-9 shrink-0 rounded-full border border-black/15 flex items-center justify-center hover:border-[#ff5722] hover:text-[#ff5722] transition-colors"
+              title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+              aria-label="Toggle sidebar"
+            >
+              {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+            </button>
+            <div className="text-sm font-semibold text-[#0a0a0a] truncate">{LABEL_FOR[tab] || "Admin"}</div>
+          </div>
           <button
             onClick={() => tab === "briefings" ? fetchBriefings() : null}
             data-testid="admin-refresh-mobile"
-            className="h-9 w-9 rounded-full border border-black/10 flex items-center justify-center"
+            className="h-9 w-9 rounded-full border border-black/10 flex items-center justify-center hover:border-[#ff5722] hover:text-[#ff5722] transition-colors"
+            title="Refresh"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </button>
@@ -438,7 +448,7 @@ function BriefingsView({ stats, numbered, loading, q, setQ, statusFilter, setSta
           <div className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#ff5722] font-bold">
             Briefings
           </div>
-          <h1 className="mt-2 font-display font-black text-4xl md:text-5xl tracking-tighter text-[#0a0a0a]">
+          <h1 className="mt-2 crm-h text-4xl md:text-5xl text-[#0a0a0a]">
             Client submissions
           </h1>
         </div>
@@ -572,7 +582,7 @@ function BriefingsView({ stats, numbered, loading, q, setQ, statusFilter, setSta
 function Stat({ label, value, dot }) {
   return (
     <div className="bg-white p-5">
-      <div className="font-display font-black text-3xl md:text-4xl tracking-tighter text-[#0a0a0a]">
+      <div className="crm-num text-3xl md:text-4xl text-[#0a0a0a]">
         {value}
       </div>
       <div className="mt-2 flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-[#4a4a4a]">

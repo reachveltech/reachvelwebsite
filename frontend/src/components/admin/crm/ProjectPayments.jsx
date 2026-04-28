@@ -45,7 +45,7 @@ export default function ProjectPayments({ token }) {
       <div className="flex items-end justify-between gap-4 mb-6">
         <div>
           <div className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#ff5722] font-bold">Project Payments</div>
-          <h2 className="mt-1 font-display font-black text-3xl md:text-4xl tracking-tighter text-[#0a0a0a]">
+          <h2 className="mt-1 crm-h text-3xl md:text-4xl text-[#0a0a0a]">
             Per-project rollup
           </h2>
           <p className="mt-2 text-sm text-[#4a4a4a]">

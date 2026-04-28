@@ -146,7 +146,7 @@ export default function CrmPanel({
           <div className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#ff5722] font-bold">
             {entityName}
           </div>
-          <h2 className="mt-1 font-display font-black text-3xl md:text-4xl tracking-tighter text-[#0a0a0a]">
+          <h2 className="mt-1 crm-h text-3xl md:text-4xl text-[#0a0a0a]">
             {title}
           </h2>
           {description && <p className="mt-2 text-sm text-[#4a4a4a] max-w-2xl">{description}</p>}

@@ -42,6 +42,19 @@ code, .mono {
     font-family: 'JetBrains Mono', monospace;
 }
 
+/* CRM admin — softer numeric & heading weights so KPIs don't look over-bold */
+.crm-num {
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+}
+.crm-h {
+    font-family: 'Cabinet Grotesk', 'Outfit', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+}
+
 @layer base {
     :root {
         --background: 45 14% 97%;

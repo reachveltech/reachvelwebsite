@@ -31,7 +31,7 @@ export default function Analytics({ token }) {
     <div data-testid="crm-analytics">
       <div className="mb-6">
         <div className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#ff5722] font-bold">Overview</div>
-        <h2 className="mt-1 font-display font-black text-3xl md:text-4xl tracking-tighter text-[#0a0a0a]">
+        <h2 className="mt-1 crm-h text-3xl md:text-4xl text-[#0a0a0a]">
           Business analytics
         </h2>
         <p className="mt-2 text-sm text-[#4a4a4a]">Live snapshot of leads, projects, tasks and cashflow.</p>
@@ -130,7 +130,7 @@ function KPI({ icon, label, value, accent = "text-[#0a0a0a]" }) {
       <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-[#4a4a4a]">
         {icon} {label}
       </div>
-      <div className={`mt-2 font-display font-black text-2xl md:text-3xl tracking-tighter ${accent}`}>
+      <div className={`mt-2 crm-num text-2xl md:text-3xl ${accent}`}>
         {value}
       </div>
     </div>

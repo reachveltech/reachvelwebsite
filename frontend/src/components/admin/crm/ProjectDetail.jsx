@@ -56,7 +56,7 @@ export default function ProjectDetail({ token, projectId }) {
           <StatusPill tone={projectGstDefault ? "indigo" : "zinc"} label={projectGstDefault ? "GST" : "Non-GST"} />
           {project.project_group && <StatusPill tone="orange" label={project.project_group} />}
         </div>
-        <h2 className="mt-2 font-display font-black text-3xl md:text-4xl tracking-tighter text-[#0a0a0a]">
+        <h2 className="mt-2 crm-h text-3xl md:text-4xl text-[#0a0a0a]">
           {project.name}
         </h2>
         <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[#4a4a4a]">
