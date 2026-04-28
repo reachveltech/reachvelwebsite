@@ -53,6 +53,7 @@ class LeadIn(BaseModel):
     value: float = 0.0
     stage: str = "new"
     owner: str = Field(default="", max_length=120)
+    follow_up_date: str = Field(default="", max_length=40)
     notes: str = Field(default="", max_length=5000)
 
 
@@ -64,6 +65,8 @@ class VendorIn(BaseModel):
     services: str = Field(default="", max_length=500)
     gst_number: str = Field(default="", max_length=40)
     address: str = Field(default="", max_length=500)
+    onboarded_date: str = Field(default="", max_length=40)
+    status: str = "active"  # active | inactive
     notes: str = Field(default="", max_length=5000)
 
 
@@ -71,6 +74,9 @@ class CrmProjectIn(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     client: str = Field(default="", max_length=200)
     lead_id: str = Field(default="", max_length=80)
+    vendor_id: str = Field(default="", max_length=80)
+    project_group: str = Field(default="", max_length=80)  # CRM | Website | Mobile App | Full Stack | AI Automation | Others
+    gst_applicable: bool = True
     status: str = "planning"
     start_date: str = Field(default="", max_length=40)
     end_date: str = Field(default="", max_length=40)
@@ -92,6 +98,8 @@ class ExpenseIn(BaseModel):
     project_id: str = Field(default="", max_length=80)
     description: str = Field(min_length=1, max_length=500)
     amount: float = 0.0
+    gst_applicable: bool = False
+    gst_pct: float = 18.0
     category: str = Field(default="", max_length=80)
     date: str = Field(default="", max_length=40)
     receipt_url: str = Field(default="", max_length=1000)
@@ -103,6 +111,7 @@ class VendorPaymentIn(BaseModel):
     vendor_id: str = Field(default="", max_length=80)
     description: str = Field(default="", max_length=500)
     amount: float = 0.0
+    gst_applicable: bool = True
     gst_pct: float = 18.0
     status: str = "pending"
     date: str = Field(default="", max_length=40)
@@ -114,6 +123,7 @@ class InvoiceIn(BaseModel):
     invoice_number: str = Field(default="", max_length=80)
     description: str = Field(default="", max_length=500)
     amount: float = 0.0
+    gst_applicable: bool = True
     gst_pct: float = 18.0
     status: str = "draft"
     issued_date: str = Field(default="", max_length=40)
@@ -135,22 +145,38 @@ class ReachvelPaymentIn(BaseModel):
     category: str = Field(default="", max_length=120)
     description: str = Field(min_length=1, max_length=500)
     amount: float = 0.0
+    source: str = Field(default="", max_length=80)         # e.g. project name / "Manual"
+    bank: str = Field(default="", max_length=40)           # SBI | Kotak | …
+    project_id: str = Field(default="", max_length=80)
     date: str = Field(default="", max_length=40)
     notes: str = Field(default="", max_length=2000)
 
 
 # ──────────────── Generic helpers ────────────────
+GST_COLLECTIONS = ("project_invoices", "vendor_payments", "project_expenses")
+
+
+def _apply_gst(doc: dict) -> dict:
+    """Compute gst_amount + total based on gst_applicable + gst_pct + amount."""
+    amt = float(doc.get("amount", 0) or 0)
+    if doc.get("gst_applicable", False):
+        gst_pct = float(doc.get("gst_pct", 0) or 0)
+        doc["gst_amount"] = round(amt * gst_pct / 100.0, 2)
+        doc["total"] = round(amt + doc["gst_amount"], 2)
+    else:
+        doc["gst_pct"] = 0.0
+        doc["gst_amount"] = 0.0
+        doc["total"] = round(amt, 2)
+    return doc
+
+
 async def _create(collection_name: str, payload: dict) -> dict:
     doc = dict(payload)
     doc["id"] = new_id()
     doc["created_at"] = now_iso()
     doc["updated_at"] = now_iso()
-    # derived: gst_amount, total for invoices + vendor_payments
-    if collection_name in ("project_invoices", "vendor_payments"):
-        amt = float(doc.get("amount", 0) or 0)
-        gst_pct = float(doc.get("gst_pct", 0) or 0)
-        doc["gst_amount"] = round(amt * gst_pct / 100.0, 2)
-        doc["total"] = round(amt + doc["gst_amount"], 2)
+    if collection_name in GST_COLLECTIONS:
+        _apply_gst(doc)
     await _db[collection_name].insert_one(dict(doc))
     out = await _db[collection_name].find_one({"id": doc["id"]}, {"_id": 0})
     return _strip_oid(out)
@@ -162,11 +188,8 @@ async def _update(collection_name: str, item_id: str, payload: dict) -> dict:
         raise HTTPException(status_code=404, detail="Not found")
     updates = dict(payload)
     updates["updated_at"] = now_iso()
-    if collection_name in ("project_invoices", "vendor_payments"):
-        amt = float(updates.get("amount", 0) or 0)
-        gst_pct = float(updates.get("gst_pct", 0) or 0)
-        updates["gst_amount"] = round(amt * gst_pct / 100.0, 2)
-        updates["total"] = round(amt + updates["gst_amount"], 2)
+    if collection_name in GST_COLLECTIONS:
+        _apply_gst(updates)
     await _db[collection_name].update_one({"id": item_id}, {"$set": updates})
     out = await _db[collection_name].find_one({"id": item_id}, {"_id": 0})
     return _strip_oid(out)
@@ -195,14 +218,50 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
 
     # ─── Leads ───
     @r.get("/leads")
-    async def list_leads(q: Optional[str] = None, stage: Optional[str] = None, _: dict = Depends(require_admin_dep)):
+    async def list_leads(q: Optional[str] = None, stage: Optional[str] = None,
+                         service: Optional[str] = None, source: Optional[str] = None,
+                         _: dict = Depends(require_admin_dep)):
         query = {}
         if stage and stage != "all":
             query["stage"] = stage
+        if service and service != "all":
+            query["service"] = service
+        if source and source != "all":
+            query["source"] = source
         if q:
             rx = {"$regex": re.escape(q), "$options": "i"}
             query["$or"] = [{"name": rx}, {"email": rx}, {"phone": rx}, {"company": rx}, {"service": rx}, {"notes": rx}]
         return await _list("leads", query)
+
+    @r.get("/leads/summary")
+    async def leads_summary(_: dict = Depends(require_admin_dep)):
+        leads = await _db.leads.find({}, {"_id": 0}).to_list(5000)
+        by_stage = {st: 0 for st in LEAD_STAGES}
+        for ld in leads:
+            by_stage[ld.get("stage", "new")] = by_stage.get(ld.get("stage", "new"), 0) + 1
+        pipeline = round(sum(float(ld.get("value", 0) or 0) for ld in leads if ld.get("stage") not in ("won", "lost")), 2)
+        won = round(sum(float(ld.get("value", 0) or 0) for ld in leads if ld.get("stage") == "won"), 2)
+        # Follow-ups due in next 7 days
+        from datetime import date as _date
+        today_d = _date.today()
+        due_soon = 0
+        for ld in leads:
+            d = (ld.get("follow_up_date") or "")[:10]
+            if not d:
+                continue
+            try:
+                fd = _date.fromisoformat(d)
+                if 0 <= (fd - today_d).days <= 7:
+                    due_soon += 1
+            except Exception:
+                pass
+        return {
+            "total": len(leads),
+            "by_stage": by_stage,
+            "pipeline_value": pipeline,
+            "won_value": won,
+            "follow_ups_due_7d": due_soon,
+        }
 
     @r.post("/leads")
     async def create_lead(payload: LeadIn, _: dict = Depends(require_admin_dep)):
@@ -234,6 +293,9 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
             "name": lead.get("company") or lead.get("name") or "New project",
             "client": lead.get("company") or lead.get("name") or "",
             "lead_id": lid,
+            "vendor_id": "",
+            "project_group": "",
+            "gst_applicable": True,
             "status": "planning",
             "start_date": "",
             "end_date": "",
@@ -248,12 +310,37 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
 
     # ─── Vendors ───
     @r.get("/vendors")
-    async def list_vendors(q: Optional[str] = None, _: dict = Depends(require_admin_dep)):
+    async def list_vendors(q: Optional[str] = None, status: Optional[str] = None, _: dict = Depends(require_admin_dep)):
         query = {}
+        if status and status != "all":
+            if status == "active":
+                # Include legacy records without a status field
+                query["$or"] = [{"status": "active"}, {"status": {"$exists": False}}]
+            else:
+                query["status"] = status
         if q:
             rx = {"$regex": re.escape(q), "$options": "i"}
-            query["$or"] = [{"name": rx}, {"company": rx}, {"email": rx}, {"phone": rx}, {"services": rx}, {"gst_number": rx}]
+            existing_or = query.pop("$or", None)
+            base = [{"name": rx}, {"company": rx}, {"email": rx}, {"phone": rx}, {"services": rx}, {"gst_number": rx}]
+            if existing_or:
+                query["$and"] = [{"$or": existing_or}, {"$or": base}]
+            else:
+                query["$or"] = base
         return await _list("vendors", query, sort_key="name", sort_dir=1)
+
+    @r.get("/vendors/summary")
+    async def vendors_summary(_: dict = Depends(require_admin_dep)):
+        all_v = await _db.vendors.find({}, {"_id": 0}).to_list(5000)
+        active = sum(1 for v in all_v if v.get("status", "active") == "active")
+        # vendor outflow (paid)
+        vps = await _db.vendor_payments.find({"status": "paid"}, {"_id": 0}).to_list(5000)
+        outflow = round(sum(float(v.get("total", v.get("amount", 0)) or 0) for v in vps), 2)
+        return {
+            "total": len(all_v),
+            "active": active,
+            "inactive": len(all_v) - active,
+            "total_paid_outflow": outflow,
+        }
 
     @r.post("/vendors")
     async def create_vendor(payload: VendorIn, _: dict = Depends(require_admin_dep)):
@@ -268,15 +355,88 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
         return await _delete("vendors", vid)
 
     # ─── CRM Projects ───
+    @r.get("/projects/summary")
+    async def projects_summary(_: dict = Depends(require_admin_dep)):
+        projects = await _db.crm_projects.find({}, {"_id": 0}).to_list(5000)
+        by_status = {st: 0 for st in PROJECT_STATUSES}
+        for p in projects:
+            by_status[p.get("status", "planning")] = by_status.get(p.get("status", "planning"), 0) + 1
+        total_budget = round(sum(float(p.get("budget", 0) or 0) for p in projects), 2)
+        # All paid invoices, all expenses, all paid vendor payments → totals across all projects
+        invoices = await _db.project_invoices.find({}, {"_id": 0}).to_list(5000)
+        invoiced = round(sum(float(i.get("total", i.get("amount", 0)) or 0) for i in invoices), 2)
+        ppays = await _db.project_payments.find({}, {"_id": 0}).to_list(5000)
+        received = round(sum(float(p.get("amount", 0) or 0) for p in ppays), 2)
+        expenses = await _db.project_expenses.find({}, {"_id": 0}).to_list(5000)
+        gen_exp = round(sum(float(e.get("total", e.get("amount", 0)) or 0) for e in expenses), 2)
+        vps = await _db.vendor_payments.find({"status": "paid"}, {"_id": 0}).to_list(5000)
+        ven_exp = round(sum(float(v.get("total", v.get("amount", 0)) or 0) for v in vps), 2)
+        return {
+            "total": len(projects),
+            "by_status": by_status,
+            "total_budget": total_budget,
+            "total_invoiced": invoiced,
+            "total_received": received,
+            "total_general_expenses": gen_exp,
+            "total_vendor_expenses": ven_exp,
+            "net_profit": round(received - gen_exp - ven_exp, 2),
+        }
+
+    @r.get("/projects/aggregates")
+    async def projects_aggregates(_: dict = Depends(require_admin_dep)):
+        """Per-project rollup used by the Project Payments page (derived view)."""
+        projects = await _db.crm_projects.find({}, {"_id": 0}).sort("created_at", -1).to_list(5000)
+        out = []
+        for p in projects:
+            pid = p["id"]
+            invs = await _db.project_invoices.find({"project_id": pid}, {"_id": 0}).to_list(2000)
+            pays = await _db.project_payments.find({"project_id": pid}, {"_id": 0}).to_list(2000)
+            exps = await _db.project_expenses.find({"project_id": pid}, {"_id": 0}).to_list(2000)
+            vps = await _db.vendor_payments.find({"project_id": pid, "status": "paid"}, {"_id": 0}).to_list(2000)
+            invoiced = round(sum(float(i.get("total", i.get("amount", 0)) or 0) for i in invs), 2)
+            received = round(sum(float(x.get("amount", 0) or 0) for x in pays), 2)
+            gen_exp = round(sum(float(e.get("total", e.get("amount", 0)) or 0) for e in exps), 2)
+            ven_exp = round(sum(float(v.get("total", v.get("amount", 0)) or 0) for v in vps), 2)
+            out.append({
+                "id": pid,
+                "name": p.get("name", ""),
+                "client": p.get("client", ""),
+                "project_group": p.get("project_group", ""),
+                "gst_applicable": bool(p.get("gst_applicable", True)),
+                "total_budget": float(p.get("budget", 0) or 0),
+                "total_invoiced": invoiced,
+                "total_received": received,
+                "total_general_expenses": gen_exp,
+                "total_vendor_expenses": ven_exp,
+                "profit": round(received - gen_exp - ven_exp, 2),
+                "status": p.get("status", "planning"),
+            })
+        return out
+
     @r.get("/projects")
-    async def list_crm_projects(q: Optional[str] = None, status: Optional[str] = None, _: dict = Depends(require_admin_dep)):
+    async def list_crm_projects(q: Optional[str] = None, status: Optional[str] = None,
+                                project_group: Optional[str] = None,
+                                _: dict = Depends(require_admin_dep)):
         query = {}
         if status and status != "all":
             query["status"] = status
+        if project_group and project_group != "all":
+            query["project_group"] = project_group
         if q:
             rx = {"$regex": re.escape(q), "$options": "i"}
             query["$or"] = [{"name": rx}, {"client": rx}, {"description": rx}]
-        return await _list("crm_projects", query)
+        projects = await _list("crm_projects", query)
+        # Enrich with per-project totals (lightweight)
+        for p in projects:
+            pid = p["id"]
+            exps = await _db.project_expenses.find({"project_id": pid}, {"_id": 0}).to_list(2000)
+            vps = await _db.vendor_payments.find({"project_id": pid, "status": "paid"}, {"_id": 0}).to_list(2000)
+            p["total_expenses"] = round(
+                sum(float(e.get("total", e.get("amount", 0)) or 0) for e in exps)
+                + sum(float(v.get("total", v.get("amount", 0)) or 0) for v in vps),
+                2,
+            )
+        return projects
 
     @r.get("/projects/{pid}")
     async def get_crm_project(pid: str, _: dict = Depends(require_admin_dep)):
@@ -421,18 +581,47 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
         return await _delete("project_payments", ppid)
 
     # ─── Reachvel Payments (credit / debit ledger) ───
+    @r.get("/reachvel-payments/summary")
+    async def reachvel_payments_summary(_: dict = Depends(require_admin_dep)):
+        items = await _db.reachvel_payments.find({}, {"_id": 0}).to_list(10000)
+        credit = round(sum(float(p.get("amount", 0) or 0) for p in items if p.get("type") == "credit"), 2)
+        debit = round(sum(float(p.get("amount", 0) or 0) for p in items if p.get("type") == "debit"), 2)
+        return {
+            "total": len(items),
+            "credit_total": credit,
+            "debit_total": debit,
+            "net": round(credit - debit, 2),
+            "synced": sum(1 for p in items if p.get("source_type") and p.get("source_type") != "manual"),
+            "manual": sum(1 for p in items if not p.get("source_type") or p.get("source_type") == "manual"),
+        }
+
     @r.get("/reachvel-payments")
-    async def list_reachvel_payments(type: Optional[str] = None, _: dict = Depends(require_admin_dep)):
+    async def list_reachvel_payments(
+        type: Optional[str] = None,
+        category: Optional[str] = None,
+        bank: Optional[str] = None,
+        project_id: Optional[str] = None,
+        _: dict = Depends(require_admin_dep),
+    ):
         query = {}
         if type and type != "all":
             query["type"] = type
+        if category and category != "all":
+            query["category"] = category
+        if bank and bank != "all":
+            query["bank"] = bank
+        if project_id and project_id != "all":
+            query["project_id"] = project_id
         return await _list("reachvel_payments", query)
 
     @r.post("/reachvel-payments")
     async def create_reachvel_payment(payload: ReachvelPaymentIn, _: dict = Depends(require_admin_dep)):
         if payload.type not in REACHVEL_PAYMENT_TYPES:
             raise HTTPException(400, f"type must be one of {sorted(REACHVEL_PAYMENT_TYPES)}")
-        return await _create("reachvel_payments", payload.model_dump())
+        data = payload.model_dump()
+        data["source_type"] = "manual"
+        data["source_id"] = ""
+        return await _create("reachvel_payments", data)
 
     @r.put("/reachvel-payments/{rpid}")
     async def update_reachvel_payment(rpid: str, payload: ReachvelPaymentIn, _: dict = Depends(require_admin_dep)):
@@ -441,6 +630,108 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
     @r.delete("/reachvel-payments/{rpid}")
     async def delete_reachvel_payment(rpid: str, _: dict = Depends(require_admin_dep)):
         return await _delete("reachvel_payments", rpid)
+
+    @r.post("/reachvel-payments/sync")
+    async def sync_reachvel_payments(_: dict = Depends(require_admin_dep)):
+        """Idempotently materialize project_payments + expenses + paid vendor_payments
+        into reachvel_payments. Already-synced records are skipped (matched by source_type+source_id)."""
+        projects = await _db.crm_projects.find({}, {"_id": 0}).to_list(5000)
+        proj_name = {p["id"]: p.get("name", "") for p in projects}
+
+        added_credit = 0
+        added_debit = 0
+        updated = 0
+
+        async def _upsert(source_type: str, source_id: str, doc: dict, _is_credit: bool) -> str:
+            existing = await _db.reachvel_payments.find_one({"source_type": source_type, "source_id": source_id})
+            if existing:
+                # Refresh amount/description in case underlying record changed
+                changed = False
+                for k in ("amount", "description", "date", "category", "source", "bank", "project_id", "type"):
+                    if existing.get(k) != doc.get(k):
+                        changed = True
+                        break
+                if changed:
+                    doc["updated_at"] = now_iso()
+                    await _db.reachvel_payments.update_one(
+                        {"id": existing["id"]}, {"$set": doc},
+                    )
+                    return "updated"
+                return "skip"
+            full = dict(doc)
+            full["id"] = new_id()
+            full["source_type"] = source_type
+            full["source_id"] = source_id
+            full["created_at"] = now_iso()
+            full["updated_at"] = now_iso()
+            await _db.reachvel_payments.insert_one(full)
+            return "credit" if _is_credit else "debit"
+
+        # Project payments → credits
+        for pp in await _db.project_payments.find({}, {"_id": 0}).to_list(10000):
+            doc = {
+                "type": "credit",
+                "category": "Client Payment",
+                "description": f"Payment received · {proj_name.get(pp.get('project_id'), 'Unknown project')}",
+                "amount": float(pp.get("amount", 0) or 0),
+                "source": proj_name.get(pp.get("project_id"), ""),
+                "bank": pp.get("method", ""),
+                "project_id": pp.get("project_id", ""),
+                "date": pp.get("date") or pp.get("created_at", "")[:10],
+                "notes": pp.get("notes", ""),
+            }
+            res = await _upsert("project_payment", pp["id"], doc, True)
+            if res == "credit":
+                added_credit += 1
+            elif res == "updated":
+                updated += 1
+
+        # Project expenses → debits
+        for ex in await _db.project_expenses.find({}, {"_id": 0}).to_list(10000):
+            amt_total = float(ex.get("total", ex.get("amount", 0)) or 0)
+            doc = {
+                "type": "debit",
+                "category": ex.get("category") or "General Expense",
+                "description": f"Expense · {ex.get('description', '')}",
+                "amount": amt_total,
+                "source": proj_name.get(ex.get("project_id"), ""),
+                "bank": "",
+                "project_id": ex.get("project_id", ""),
+                "date": ex.get("date") or ex.get("created_at", "")[:10],
+                "notes": ex.get("notes", ""),
+            }
+            res = await _upsert("expense", ex["id"], doc, False)
+            if res == "debit":
+                added_debit += 1
+            elif res == "updated":
+                updated += 1
+
+        # Paid vendor payments → debits
+        for vp in await _db.vendor_payments.find({"status": "paid"}, {"_id": 0}).to_list(10000):
+            amt_total = float(vp.get("total", vp.get("amount", 0)) or 0)
+            doc = {
+                "type": "debit",
+                "category": "Professional Fees",
+                "description": f"Vendor payment · {vp.get('description', '')}",
+                "amount": amt_total,
+                "source": proj_name.get(vp.get("project_id"), ""),
+                "bank": "",
+                "project_id": vp.get("project_id", ""),
+                "date": vp.get("date") or vp.get("created_at", "")[:10],
+                "notes": vp.get("notes", ""),
+            }
+            res = await _upsert("vendor_payment", vp["id"], doc, False)
+            if res == "debit":
+                added_debit += 1
+            elif res == "updated":
+                updated += 1
+
+        return {
+            "added_credits": added_credit,
+            "added_debits": added_debit,
+            "updated": updated,
+            "ok": True,
+        }
 
     # ─── Analytics (aggregate) ───
     @r.get("/analytics")

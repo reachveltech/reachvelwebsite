@@ -43,3 +43,11 @@ export const crmUpdate = (t, entity, id, payload) => client.put(`${crm}/${entity
 export const crmDelete = (t, entity, id) => client.delete(`${crm}/${entity}/${id}`, auth(t)).then((r) => r.data);
 
 export const crmConvertLead = (t, leadId) => client.post(`${crm}/leads/${leadId}/convert`, {}, auth(t)).then((r) => r.data);
+
+// Summaries / aggregates / sync
+export const crmLeadsSummary    = (t) => client.get(`${crm}/leads/summary`, auth(t)).then((r) => r.data);
+export const crmVendorsSummary  = (t) => client.get(`${crm}/vendors/summary`, auth(t)).then((r) => r.data);
+export const crmProjectsSummary = (t) => client.get(`${crm}/projects/summary`, auth(t)).then((r) => r.data);
+export const crmProjectsAggregates = (t) => client.get(`${crm}/projects/aggregates`, auth(t)).then((r) => r.data);
+export const crmReachvelSummary = (t) => client.get(`${crm}/reachvel-payments/summary`, auth(t)).then((r) => r.data);
+export const crmReachvelSync    = (t) => client.post(`${crm}/reachvel-payments/sync`, {}, auth(t)).then((r) => r.data);

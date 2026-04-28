@@ -35,6 +35,7 @@ export default function CrmPanel({
   initialForm = {},
   emptyText,
   searchable = true,
+  onChange,
 }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -115,6 +116,7 @@ export default function CrmPanel({
       }
       cancel();
       load();
+      onChange?.();
     } catch (err) {
       const detail = err?.response?.data?.detail;
       toast.error(typeof detail === "string" ? detail : `Couldn't save ${entityName}.`);
@@ -129,6 +131,7 @@ export default function CrmPanel({
       await remove(item.id);
       toast.success("Deleted");
       load();
+      onChange?.();
     } catch {
       toast.error("Couldn't delete.");
     }
@@ -282,6 +285,7 @@ function formFromItem(item, fields, initial) {
     let v = item?.[f.name];
     if (f.type === "switch") v = !!v;
     else if (f.type === "number" || f.type === "money") v = v ?? (initial[f.name] ?? 0);
+    else if (f.type === "select" && typeof v === "boolean") v = v ? "true" : "false";
     else v = v ?? initial[f.name] ?? "";
     out[f.name] = v;
   }

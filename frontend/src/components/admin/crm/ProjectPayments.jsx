@@ -1,53 +1,125 @@
-import { useEffect, useState } from "react";
-import CrmPanel from "./CrmPanel";
-import { crmList, crmCreate, crmUpdate, crmDelete } from "@/lib/api";
-import { INR_PRECISE, fmtDate } from "./crmUtils";
+import { useEffect, useState, useCallback } from "react";
+import { RefreshCw, Wallet, Receipt, ArrowUpCircle, ArrowDownCircle, TrendingUp } from "lucide-react";
+import { toast } from "sonner";
+import SummaryCards from "./SummaryCards";
+import StatusPill from "./StatusPill";
+import { crmProjectsAggregates, crmProjectsSummary } from "@/lib/api";
+import { INR, INR_PRECISE, PROJECT_STATUSES, PROJECT_STATUS_TONE } from "./crmUtils";
 
 export default function ProjectPayments({ token }) {
-  const [projects, setProjects] = useState([]);
-  const [invoices, setInvoices] = useState([]);
+  const [rows, setRows] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    Promise.all([crmList(token, "projects"), crmList(token, "invoices")])
-      .then(([p, i]) => { setProjects(p); setInvoices(i); })
-      .catch(() => {});
+  const reload = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [r, s] = await Promise.all([
+        crmProjectsAggregates(token),
+        crmProjectsSummary(token),
+      ]);
+      setRows(r);
+      setSummary(s);
+    } catch {
+      toast.error("Couldn't load project aggregates");
+    } finally {
+      setLoading(false);
+    }
   }, [token]);
 
-  const projectMap = Object.fromEntries(projects.map((p) => [p.id, p.name]));
-  const invMap = Object.fromEntries(invoices.map((i) => [i.id, i.invoice_number]));
+  useEffect(() => { reload(); }, [reload]);
 
-  const fields = [
-    { name: "project_id",  label: "Project",        type: "select", required: true,
-      options: [{ value: "", label: "— Select project —" }, ...projects.map((p) => ({ value: p.id, label: p.name }))] },
-    { name: "invoice_id",  label: "Against invoice", type: "select",
-      options: [{ value: "", label: "— Unlinked —" }, ...invoices.map((i) => ({ value: i.id, label: `${i.invoice_number || "INV"} · ${projectMap[i.project_id] || ""}` }))] },
-    { name: "amount",      label: "Amount received (₹)", type: "money", required: true },
-    { name: "method",      label: "Method",         type: "text", placeholder: "Bank transfer · UPI · Cheque" },
-    { name: "date",        label: "Date",           type: "date" },
-    { name: "notes",       label: "Notes",          type: "textarea", full: true, rows: 3 },
-  ];
-
-  const columns = [
-    { key: "project_id", label: "Project",   render: (r) => <div className="font-semibold">{projectMap[r.project_id] || "—"}</div> },
-    { key: "invoice_id", label: "Invoice #", render: (r) => <span className="font-mono text-xs">{invMap[r.invoice_id] || "—"}</span> },
-    { key: "amount",     label: "Amount",    render: (r) => <span className="font-mono font-bold text-emerald-600">{INR_PRECISE(r.amount)}</span> },
-    { key: "method",     label: "Method",    render: (r) => r.method || "—" },
-    { key: "date",       label: "Date",      render: (r) => <span className="font-mono text-xs">{fmtDate(r.date)}</span> },
-    { key: "notes",      label: "Notes",     render: (r) => <span className="text-[#4a4a4a] truncate max-w-[24ch] inline-block">{r.notes || "—"}</span> },
-  ];
+  const cards = summary ? [
+    { label: "Total budget",     value: INR(summary.total_budget),           icon: <Wallet className="h-3.5 w-3.5" />,        tone: "bg-blue-500" },
+    { label: "Total invoiced",   value: INR(summary.total_invoiced),         icon: <Receipt className="h-3.5 w-3.5" />,       tone: "bg-indigo-500" },
+    { label: "Total received",   value: INR(summary.total_received),         icon: <ArrowUpCircle className="h-3.5 w-3.5" />, tone: "bg-emerald-500", accent: "text-emerald-700" },
+    { label: "General expenses", value: INR(summary.total_general_expenses), icon: <ArrowDownCircle className="h-3.5 w-3.5" />, tone: "bg-amber-500" },
+    { label: "Vendor expenses",  value: INR(summary.total_vendor_expenses),  icon: <ArrowDownCircle className="h-3.5 w-3.5" />, tone: "bg-rose-500" },
+    { label: "Net profit",       value: INR(summary.net_profit),             icon: <TrendingUp className="h-3.5 w-3.5" />,
+      accent: summary.net_profit >= 0 ? "text-emerald-700" : "text-rose-700",
+      tone: summary.net_profit >= 0 ? "bg-emerald-500" : "bg-rose-500" },
+  ] : [];
 
   return (
-    <CrmPanel
-      title="Project Payments"
-      entityName="project-payments"
-      description="All client payments across every Reachvel project."
-      fields={fields}
-      columns={columns}
-      list={(p) => crmList(token, "project-payments", p)}
-      create={(p) => crmCreate(token, "project-payments", p)}
-      update={(id, p) => crmUpdate(token, "project-payments", id, p)}
-      remove={(id) => crmDelete(token, "project-payments", id)}
-      searchable={false}
-    />
+    <div data-testid="crm-project-payments-page">
+      <div className="flex items-end justify-between gap-4 mb-6">
+        <div>
+          <div className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#ff5722] font-bold">Project Payments</div>
+          <h2 className="mt-1 font-display font-black text-3xl md:text-4xl tracking-tighter text-[#0a0a0a]">
+            Per-project rollup
+          </h2>
+          <p className="mt-2 text-sm text-[#4a4a4a]">
+            Live totals computed from invoices, expenses, vendor payments, and received payments.
+            Add records inside each project's detail view.
+          </p>
+        </div>
+        <button
+          onClick={reload}
+          data-testid="crm-pp-refresh"
+          className="inline-flex items-center gap-2 px-4 py-2 text-xs border border-black/15 rounded-full hover:border-[#ff5722] hover:text-[#ff5722] transition-colors"
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Refresh
+        </button>
+      </div>
+
+      {summary && <SummaryCards cards={cards} />}
+
+      <div className="bg-white border border-black/10 overflow-x-auto">
+        {loading ? (
+          <div className="p-10 text-sm text-[#4a4a4a]">Loading…</div>
+        ) : rows.length === 0 ? (
+          <div className="p-10 text-sm text-[#4a4a4a]">No projects yet.</div>
+        ) : (
+          <table className="w-full text-left min-w-[1100px]">
+            <thead className="bg-[#f7f6f3] border-b border-black/10 text-[11px] font-mono uppercase tracking-[0.2em] text-[#4a4a4a]">
+              <tr>
+                <th className="px-4 py-4 w-12">S.No</th>
+                <th className="px-4 py-4">Project</th>
+                <th className="px-4 py-4">GST</th>
+                <th className="px-4 py-4 text-right">Total Budget</th>
+                <th className="px-4 py-4 text-right">Total Invoiced</th>
+                <th className="px-4 py-4 text-right">Total Received</th>
+                <th className="px-4 py-4 text-right">Gen. Expenses</th>
+                <th className="px-4 py-4 text-right">Vendor Expenses</th>
+                <th className="px-4 py-4 text-right">Profit</th>
+                <th className="px-4 py-4">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r, i) => {
+                const profitColor = r.profit >= 0 ? "text-emerald-700" : "text-rose-700";
+                return (
+                  <tr key={r.id} data-testid={`crm-pp-row-${r.id}`}
+                      className="border-b border-black/5 hover:bg-[#0a0a0a]/[0.02] transition-colors">
+                    <td className="px-4 py-4 text-xs font-mono text-[#4a4a4a]">{String(i + 1).padStart(2, "0")}</td>
+                    <td className="px-4 py-4">
+                      <div className="font-semibold text-[#0a0a0a]">{r.name || "—"}</div>
+                      {r.client && <div className="text-[11px] text-[#4a4a4a]">{r.client}</div>}
+                      {r.project_group && (
+                        <span className="mt-1 inline-block px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.1em] bg-[#ff5722]/10 text-[#ff5722] rounded">
+                          {r.project_group}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-4">
+                      <StatusPill tone={r.gst_applicable ? "indigo" : "zinc"} label={r.gst_applicable ? "GST" : "Non-GST"} />
+                    </td>
+                    <td className="px-4 py-4 text-right font-mono">{INR_PRECISE(r.total_budget)}</td>
+                    <td className="px-4 py-4 text-right font-mono">{INR_PRECISE(r.total_invoiced)}</td>
+                    <td className="px-4 py-4 text-right font-mono text-emerald-700">{INR_PRECISE(r.total_received)}</td>
+                    <td className="px-4 py-4 text-right font-mono text-amber-700">{INR_PRECISE(r.total_general_expenses)}</td>
+                    <td className="px-4 py-4 text-right font-mono text-rose-700">{INR_PRECISE(r.total_vendor_expenses)}</td>
+                    <td className={`px-4 py-4 text-right font-mono font-bold ${profitColor}`}>{INR_PRECISE(r.profit)}</td>
+                    <td className="px-4 py-4">
+                      <StatusPill tone={PROJECT_STATUS_TONE[r.status] || "zinc"} label={(PROJECT_STATUSES.find((s) => s.k === r.status) || PROJECT_STATUSES[0]).label} />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
   );
 }

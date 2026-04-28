@@ -88,4 +88,93 @@ export const REACHVEL_PAYMENT_TYPES = [
   { k: "debit",  label: "Debit",  dot: "bg-rose-500"    },
 ];
 
+// ─────────── New dropdowns from spec ───────────
+export const SERVICE_INTERESTS = [
+  { k: "Website Development", label: "Website Development" },
+  { k: "Mobile App",          label: "Mobile App"          },
+  { k: "AI Automation",       label: "AI Automation"       },
+  { k: "Full Stack",          label: "Full Stack"          },
+  { k: "Others",              label: "Others"              },
+];
+
+export const LEAD_SOURCES = [
+  { k: "Referral",       label: "Referral"       },
+  { k: "Website",        label: "Website"        },
+  { k: "Social Media",   label: "Social Media"   },
+  { k: "Cold Outreach",  label: "Cold Outreach"  },
+  { k: "Event",          label: "Event"          },
+  { k: "Advertisement",  label: "Advertisement"  },
+  { k: "Other",          label: "Other"          },
+];
+
+export const VENDOR_STATUSES = [
+  { k: "active",   label: "Active",   dot: "bg-emerald-500" },
+  { k: "inactive", label: "Inactive", dot: "bg-zinc-400"    },
+];
+
+export const PROJECT_GROUPS = [
+  { k: "CRM",            label: "CRM"            },
+  { k: "Website",        label: "Website"        },
+  { k: "Mobile App",     label: "Mobile App"     },
+  { k: "Full Stack",     label: "Full Stack"     },
+  { k: "AI Automation",  label: "AI Automation"  },
+  { k: "Others",         label: "Others"         },
+];
+
+export const BANKS = [
+  { k: "SBI",   label: "SBI"   },
+  { k: "Kotak", label: "Kotak" },
+];
+
+export const REACHVEL_CREDIT_CATEGORIES = [
+  { k: "Revenue",        label: "Revenue"        },
+  { k: "Client Payment", label: "Client Payment" },
+  { k: "Refund",         label: "Refund"         },
+  { k: "Investment",     label: "Investment"     },
+  { k: "Loan",           label: "Loan"           },
+  { k: "Grant",          label: "Grant"          },
+  { k: "Others",         label: "Others"         },
+];
+
+export const REACHVEL_DEBIT_CATEGORIES = [
+  { k: "General Expense",     label: "General Expense"     },
+  { k: "Payroll",             label: "Payroll"             },
+  { k: "Equipment",           label: "Equipment"           },
+  { k: "Software services",   label: "Software services"   },
+  { k: "Marketing",           label: "Marketing"           },
+  { k: "Rent & Utilities",    label: "Rent & Utilities"    },
+  { k: "Office Supplies",     label: "Office Supplies"     },
+  { k: "Travel & Transport",  label: "Travel & Transport"  },
+  { k: "Professional Fees",   label: "Professional Fees"   },
+  { k: "Tax & Licenses",      label: "Tax & Licenses"      },
+  { k: "Others",              label: "Others"              },
+];
+
+// ─────────── Color tokens for Status pills ───────────
+// Used by <StatusPill> for vibrant chips (no dull dots).
+export const PILL_TONES = {
+  emerald: "bg-emerald-500/12 text-emerald-700 border-emerald-500/30",
+  amber:   "bg-amber-500/12   text-amber-700   border-amber-500/30",
+  rose:    "bg-rose-500/12    text-rose-700    border-rose-500/30",
+  blue:    "bg-blue-500/12    text-blue-700    border-blue-500/30",
+  indigo:  "bg-indigo-500/12  text-indigo-700  border-indigo-500/30",
+  violet:  "bg-violet-500/12  text-violet-700  border-violet-500/30",
+  zinc:    "bg-zinc-200       text-zinc-700    border-zinc-300",
+  orange:  "bg-[#ff5722]/12   text-[#ff5722]   border-[#ff5722]/30",
+};
+
+export const STAGE_TONE = {
+  new: "zinc", contacted: "blue", qualified: "indigo",
+  proposal: "amber", won: "emerald", lost: "rose",
+};
+export const PROJECT_STATUS_TONE = {
+  planning: "zinc", in_progress: "blue", on_hold: "amber",
+  completed: "emerald", cancelled: "rose",
+};
+export const TASK_STATUS_TONE   = { todo: "zinc", in_progress: "blue", done: "emerald" };
+export const INVOICE_TONE       = { draft: "zinc", sent: "blue", paid: "emerald", overdue: "rose" };
+export const VENDOR_PAY_TONE    = { pending: "amber", paid: "emerald" };
+export const VENDOR_TONE        = { active: "emerald", inactive: "zinc" };
+export const PAYMENT_TYPE_TONE  = { credit: "emerald", debit: "rose" };
+
 export const labelFrom = (arr, key) => (arr.find((x) => x.k === key) || { label: key }).label;

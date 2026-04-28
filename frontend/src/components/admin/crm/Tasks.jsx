@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import CrmPanel from "./CrmPanel";
+import StatusPill from "./StatusPill";
 import { crmList, crmCreate, crmUpdate, crmDelete } from "@/lib/api";
-import { fmtDate, TASK_STATUSES, TASK_PRIORITIES, labelFrom } from "./crmUtils";
+import { fmtDate, TASK_STATUSES, TASK_PRIORITIES, TASK_STATUS_TONE } from "./crmUtils";
 
 export default function Tasks({ token, projectId = null, projects: projectsProp = null, compact = false }) {
   const [projects, setProjects] = useState(projectsProp || []);
@@ -30,7 +31,7 @@ export default function Tasks({ token, projectId = null, projects: projectsProp 
     { key: "assignee",   label: "Assignee",  render: (r) => r.assignee || "—" },
     { key: "priority",   label: "Priority",  render: (r) => <PriorityTag k={r.priority} /> },
     { key: "due_date",   label: "Due",       render: (r) => <span className="font-mono text-xs">{fmtDate(r.due_date)}</span> },
-    { key: "status",     label: "Status",    render: (r) => <StatusBadge k={r.status} /> },
+    { key: "status",     label: "Status",    render: (r) => <StatusPill tone={TASK_STATUS_TONE[r.status] || "zinc"} label={(TASK_STATUSES.find((s) => s.k === r.status) || TASK_STATUSES[0]).label} /> },
   ].filter(Boolean);
 
   return (
@@ -48,16 +49,6 @@ export default function Tasks({ token, projectId = null, projects: projectsProp 
       initialForm={{ status: "todo", priority: "medium", project_id: projectId || "" }}
       extraParams={projectId ? { project_id: projectId } : {}}
     />
-  );
-}
-
-function StatusBadge({ k }) {
-  const s = TASK_STATUSES.find((x) => x.k === k) || TASK_STATUSES[0];
-  return (
-    <span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white border border-black/10 text-[11px] font-mono uppercase tracking-[0.1em]">
-      <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
-      {s.label}
-    </span>
   );
 }
 
