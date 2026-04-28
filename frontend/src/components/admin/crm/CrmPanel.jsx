@@ -70,6 +70,15 @@ export default function CrmPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, JSON.stringify(filterState), JSON.stringify(extraParams)]);
 
+  // Listen for external refresh events e.g. after lead→project conversion
+  useEffect(() => {
+    const handler = () => load();
+    const ev = `crm-${entityName}-refresh`;
+    window.addEventListener(ev, handler);
+    return () => window.removeEventListener(ev, handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entityName, q, JSON.stringify(filterState)]);
+
   const startNew = () => {
     setEditing({});
     setForm(formFromItem({}, fields, initialForm));

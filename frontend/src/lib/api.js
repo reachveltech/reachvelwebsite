@@ -41,3 +41,5 @@ export const crmGet    = (t, entity, id) => client.get(`${crm}/${entity}/${id}`,
 export const crmCreate = (t, entity, payload) => client.post(`${crm}/${entity}`, payload, auth(t)).then((r) => r.data);
 export const crmUpdate = (t, entity, id, payload) => client.put(`${crm}/${entity}/${id}`, payload, auth(t)).then((r) => r.data);
 export const crmDelete = (t, entity, id) => client.delete(`${crm}/${entity}/${id}`, auth(t)).then((r) => r.data);
+
+export const crmConvertLead = (t, leadId) => client.post(`${crm}/leads/${leadId}/convert`, {}, auth(t)).then((r) => r.data);

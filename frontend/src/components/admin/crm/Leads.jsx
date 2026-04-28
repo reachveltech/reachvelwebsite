@@ -1,9 +1,13 @@
+import { useRef } from "react";
+import { toast } from "sonner";
+import { Rocket } from "lucide-react";
 import CrmPanel from "./CrmPanel";
-import { crmList, crmCreate, crmUpdate, crmDelete } from "@/lib/api";
-import { INR, fmtDate, LEAD_STAGES, labelFrom } from "./crmUtils";
+import { crmList, crmCreate, crmUpdate, crmDelete, crmConvertLead } from "@/lib/api";
+import { INR, LEAD_STAGES } from "./crmUtils";
 
 export default function Leads({ token }) {
   const stageOptions = LEAD_STAGES.map((s) => ({ value: s.k, label: s.label }));
+  const reloadRef = useRef(0);
 
   const fields = [
     { name: "name",    label: "Name",    type: "text",   required: true, full: true, placeholder: "John Doe" },
@@ -18,6 +22,25 @@ export default function Leads({ token }) {
     { name: "notes",   label: "Notes",   type: "textarea", full: true, rows: 4 },
   ];
 
+  const handleConvert = async (lead) => {
+    if (lead.stage === "won") {
+      if (!window.confirm("This lead is already marked Won. Create a new project from it anyway?")) return;
+    } else {
+      if (!window.confirm(`Convert "${lead.name}" into a Reachvel Project?\nThis will mark the lead as Won and carry over ${INR(lead.value)} as budget.`)) return;
+    }
+    try {
+      const res = await crmConvertLead(token, lead.id);
+      const action = res.created ? "Created" : "Linked";
+      toast.success(`${action} project "${res.project.name}" from lead.`);
+      // Trigger refresh
+      reloadRef.current += 1;
+      window.dispatchEvent(new CustomEvent("crm-leads-refresh"));
+    } catch (err) {
+      const detail = err?.response?.data?.detail || "Couldn't convert lead.";
+      toast.error(detail);
+    }
+  };
+
   const columns = [
     { key: "name",    label: "Name",    render: (r) => <div className="font-semibold">{r.name}</div> },
     { key: "company", label: "Company", render: (r) => r.company || "—" },
@@ -27,6 +50,20 @@ export default function Leads({ token }) {
     { key: "value",   label: "Value",   render: (r) => <span className="font-mono">{INR(r.value)}</span> },
     { key: "stage",   label: "Stage",   render: (r) => <StageBadge stage={r.stage} /> },
     { key: "owner",   label: "Owner",   render: (r) => r.owner || "—" },
+    {
+      key: "convert", label: "Convert",
+      render: (r) => (
+        <button
+          onClick={() => handleConvert(r)}
+          data-testid={`crm-convert-lead-${r.id}`}
+          disabled={r.stage === "lost"}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#ff5722]/30 text-[11px] font-mono uppercase tracking-[0.1em] text-[#ff5722] hover:bg-[#ff5722] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          title={r.stage === "lost" ? "Can't convert a lost lead" : "Create a Reachvel Project from this lead"}
+        >
+          <Rocket className="h-3 w-3" /> To project
+        </button>
+      ),
+    },
   ];
 
   return (

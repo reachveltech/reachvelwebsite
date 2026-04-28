@@ -220,6 +220,32 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
     async def delete_lead(lid: str, _: dict = Depends(require_admin_dep)):
         return await _delete("leads", lid)
 
+    @r.post("/leads/{lid}/convert")
+    async def convert_lead_to_project(lid: str, _: dict = Depends(require_admin_dep)):
+        lead = await _db.leads.find_one({"id": lid}, {"_id": 0})
+        if not lead:
+            raise HTTPException(404, "Lead not found")
+        if lead.get("stage") == "won":
+            # Idempotency: if already won and has a linked project, return it
+            existing = await _db.crm_projects.find_one({"lead_id": lid}, {"_id": 0})
+            if existing:
+                return {"project": existing, "lead": lead, "created": False}
+        project_payload = {
+            "name": lead.get("company") or lead.get("name") or "New project",
+            "client": lead.get("company") or lead.get("name") or "",
+            "lead_id": lid,
+            "status": "planning",
+            "start_date": "",
+            "end_date": "",
+            "budget": float(lead.get("value", 0) or 0),
+            "description": (lead.get("notes") or "").strip(),
+        }
+        project = await _create("crm_projects", project_payload)
+        # Mark the lead as won
+        await _db.leads.update_one({"id": lid}, {"$set": {"stage": "won", "updated_at": now_iso()}})
+        lead = await _db.leads.find_one({"id": lid}, {"_id": 0})
+        return {"project": project, "lead": lead, "created": True}
+
     # ─── Vendors ───
     @r.get("/vendors")
     async def list_vendors(q: Optional[str] = None, _: dict = Depends(require_admin_dep)):
