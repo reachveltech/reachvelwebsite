@@ -38,7 +38,7 @@ export default function Projects() {
       <div className="grain fixed inset-0" />
 
       {/* Hero */}
-      <section className="relative pt-[140px] md:pt-[180px] pb-14 md:pb-20">
+      <section className="relative pt-[110px] sm:pt-[140px] md:pt-[180px] pb-14 md:pb-20">
         <div className="radial-fade-dark absolute inset-0 pointer-events-none" />
         <ProjectsAtom className="hidden lg:block absolute right-[-40px] top-[90px] h-[520px] w-[520px] opacity-85 pointer-events-none z-[5]" />
         <div className="relative mx-auto max-w-[1400px] px-5 md:px-10">
@@ -46,7 +46,7 @@ export default function Projects() {
             <SectionLabel tone="dark">Case Studies · 2023 – 2025</SectionLabel>
           </Reveal>
           <Reveal delay={80}>
-            <h1 className="mt-6 font-display font-black text-6xl sm:text-7xl md:text-8xl lg:text-[9.5rem] tracking-[-0.04em] leading-[0.88] max-w-6xl">
+            <h1 className="mt-6 font-display font-black text-[12vw] sm:text-7xl md:text-8xl lg:text-[9.5rem] tracking-[-0.04em] leading-[0.88] max-w-6xl">
               Selected
               <br />
               <span className="italic font-light">work that</span>

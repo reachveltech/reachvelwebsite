@@ -15,7 +15,7 @@ export default function About() {
         path="/about"
       />
       {/* Hero */}
-      <section className="relative overflow-hidden pt-[140px] md:pt-[180px] pb-20 md:pb-24">
+      <section className="relative overflow-hidden pt-[110px] sm:pt-[140px] md:pt-[180px] pb-20 md:pb-24">
         <div className="hero-grid absolute inset-0 opacity-50 pointer-events-none" />
         <AboutAtom className="hidden lg:block absolute right-[-60px] top-[80px] h-[560px] w-[560px] opacity-80 pointer-events-none z-[5]" />
 
@@ -24,7 +24,7 @@ export default function About() {
             <SectionLabel>About · Est. 2018</SectionLabel>
           </Reveal>
           <Reveal delay={80}>
-            <h1 className="mt-6 font-display font-black text-6xl sm:text-7xl md:text-8xl lg:text-[9rem] tracking-[-0.04em] leading-[0.9] text-[#0a0a0a] max-w-5xl">
+            <h1 className="mt-6 font-display font-black text-[12vw] sm:text-7xl md:text-8xl lg:text-[9rem] tracking-[-0.04em] leading-[0.9] text-[#0a0a0a] max-w-5xl">
               A studio of
               <br />
               <span className="italic font-light">engineers,</span>
@@ -55,7 +55,7 @@ export default function About() {
           </Reveal>
 
           <Reveal delay={120}>
-            <h2 className="font-display font-black text-4xl md:text-5xl lg:text-6xl tracking-tighter leading-[0.96] text-[#0a0a0a]">
+            <h2 className="font-display font-black text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tighter leading-[0.96] text-[#0a0a0a]">
               We build the interfaces between human intent and
               intelligent systems — and we treat that interface like a
               <span className="text-[#ff5722]"> load-bearing wall</span>.
@@ -74,7 +74,7 @@ export default function About() {
         <div className="mx-auto max-w-[1400px] px-5 md:px-10">
           <div className="max-w-3xl mb-16">
             <SectionLabel>What We Believe</SectionLabel>
-            <h2 className="mt-5 font-display font-black text-5xl md:text-6xl tracking-tighter leading-[0.95] text-[#0a0a0a]">
+            <h2 className="mt-5 font-display font-black text-4xl sm:text-5xl md:text-6xl tracking-tighter leading-[0.95] text-[#0a0a0a]">
               Four beliefs. Held
               <br /> unreasonably.
             </h2>
@@ -102,7 +102,7 @@ export default function About() {
         <div className="relative mx-auto max-w-[1400px] px-5 md:px-10 py-24 md:py-32 grid lg:grid-cols-[1fr_1.4fr] gap-10 md:gap-16">
           <div>
             <SectionLabel tone="dark">By the numbers</SectionLabel>
-            <h2 className="mt-5 font-display font-black text-5xl md:text-6xl tracking-tighter leading-[0.95]">
+            <h2 className="mt-5 font-display font-black text-4xl sm:text-5xl md:text-6xl tracking-tighter leading-[0.95]">
               Seven years.
               <br /> Every one
               <br /> <span className="text-[#ff5722]">measured.</span>
@@ -110,11 +110,11 @@ export default function About() {
           </div>
           <div className="grid grid-cols-2 gap-px bg-white/10 border border-white/10 self-end w-full">
             {STATS.map((s) => (
-              <div key={s.label} className="bg-[#050505] p-8 md:p-10 min-h-[180px] flex flex-col justify-end">
-                <div className="font-display font-black text-5xl md:text-6xl tracking-tighter text-white leading-none">
+              <div key={s.label} className="bg-[#050505] p-6 sm:p-8 md:p-10 min-h-[160px] sm:min-h-[180px] flex flex-col justify-end">
+                <div className="font-display font-black text-4xl sm:text-5xl md:text-6xl tracking-tighter text-white leading-none">
                   {s.value}
                 </div>
-                <div className="mt-4 text-[11px] uppercase tracking-[0.25em] text-white/60 font-bold">
+                <div className="mt-4 text-[10px] sm:text-[11px] uppercase tracking-[0.25em] text-white/60 font-bold">
                   {s.label}
                 </div>
               </div>
@@ -129,7 +129,7 @@ export default function About() {
           <div className="mb-16 flex items-end justify-between gap-6">
             <div>
               <SectionLabel>Leadership</SectionLabel>
-              <h2 className="mt-5 font-display font-black text-5xl md:text-6xl tracking-tighter leading-[0.95] text-[#0a0a0a]">
+              <h2 className="mt-5 font-display font-black text-4xl sm:text-5xl md:text-6xl tracking-tighter leading-[0.95] text-[#0a0a0a]">
                 The four we build around.
               </h2>
             </div>
@@ -141,7 +141,7 @@ export default function About() {
                 <div className="group relative bg-white border border-black/10 rounded-sm overflow-hidden">
                   <div className="aspect-[3/4] bg-[#0a0a0a] relative overflow-hidden flex items-center justify-center">
                     <div className="absolute inset-0 hero-grid-dark opacity-40" />
-                    <div className="relative z-10 font-display font-black text-[10rem] text-white/90 tracking-tighter leading-none">
+                    <div className="relative z-10 font-display font-black text-[7rem] sm:text-[10rem] text-white/90 tracking-tighter leading-none">
                       {l.initial}
                     </div>
                     <div className="absolute bottom-4 left-4 text-[10px] font-mono uppercase tracking-[0.2em] text-white/60">
@@ -164,7 +164,7 @@ export default function About() {
       {/* CTA */}
       <section className="bg-white border-t border-black/10 py-20 md:py-28">
         <div className="mx-auto max-w-[1400px] px-5 md:px-10 grid lg:grid-cols-[1.5fr_1fr] gap-10 items-end">
-          <h2 className="font-display font-black text-5xl md:text-6xl lg:text-7xl tracking-tighter leading-[0.95] text-[#0a0a0a]">
+          <h2 className="font-display font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tighter leading-[0.95] text-[#0a0a0a]">
             Think we'd be
             <br /> a <span className="text-[#ff5722]">fit?</span>
           </h2>

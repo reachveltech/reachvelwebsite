@@ -31,7 +31,7 @@ export default function Article() {
 
   if (notFound) {
     return (
-      <div className="bg-[#f7f6f3] pt-[160px] pb-24 min-h-screen">
+      <div className="bg-[#f7f6f3] pt-[110px] sm:pt-[160px] pb-24 min-h-screen">
         <Seo title="Essay not found" path={`/knowledge/${slug}`} noindex />
         <div className="mx-auto max-w-[1400px] px-5 md:px-10">
           <h1 className="font-display font-black text-5xl text-[#0a0a0a]">Essay not found.</h1>
@@ -49,7 +49,7 @@ export default function Article() {
 
   if (loading || !article) {
     return (
-      <div className="bg-[#f7f6f3] pt-[160px] pb-24 min-h-screen">
+      <div className="bg-[#f7f6f3] pt-[110px] sm:pt-[160px] pb-24 min-h-screen">
         <div className="mx-auto max-w-[1400px] px-5 md:px-10 text-[#4a4a4a]">
           Loading…
         </div>
@@ -91,7 +91,7 @@ export default function Article() {
       />
 
       {/* Hero */}
-      <section className="pt-[140px] md:pt-[180px] pb-10 md:pb-16">
+      <section className="pt-[110px] sm:pt-[140px] md:pt-[180px] pb-10 md:pb-16">
         <div className="mx-auto max-w-3xl px-5 md:px-10">
           <Link
             to="/knowledge"

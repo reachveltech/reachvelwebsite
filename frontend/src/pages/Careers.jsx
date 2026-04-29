@@ -122,7 +122,7 @@ export default function Careers() {
         path="/careers"
       />
       {/* Hero */}
-      <section className="relative overflow-hidden pt-[140px] md:pt-[180px] pb-16 md:pb-24">
+      <section className="relative overflow-hidden pt-[110px] sm:pt-[140px] md:pt-[180px] pb-16 md:pb-24">
         <div className="hero-grid absolute inset-0 opacity-50 pointer-events-none" />
         <CareersAtom className="hidden lg:block absolute right-[-60px] top-[60px] h-[560px] w-[560px] opacity-80 pointer-events-none z-[5]" />
         <div className="relative mx-auto max-w-[1400px] px-5 md:px-10">
@@ -130,7 +130,7 @@ export default function Careers() {
             <SectionLabel>Careers · {roles.length} Open Roles</SectionLabel>
           </Reveal>
           <Reveal delay={80}>
-            <h1 className="mt-6 font-display font-black text-6xl sm:text-7xl md:text-8xl lg:text-[9.5rem] tracking-[-0.04em] leading-[0.9] text-[#0a0a0a] max-w-6xl">
+            <h1 className="mt-6 font-display font-black text-[12vw] sm:text-7xl md:text-8xl lg:text-[9.5rem] tracking-[-0.04em] leading-[0.9] text-[#0a0a0a] max-w-6xl">
               Build a career
               <br />
               <span className="italic font-light">worth</span>{" "}
@@ -184,7 +184,7 @@ export default function Careers() {
         <div className="mx-auto max-w-[1400px] px-5 md:px-10">
           <div className="max-w-3xl mb-14">
             <SectionLabel>Benefits</SectionLabel>
-            <h2 className="mt-5 font-display font-black text-5xl md:text-6xl tracking-tighter leading-[0.95] text-[#0a0a0a]">
+            <h2 className="mt-5 font-display font-black text-4xl sm:text-5xl md:text-6xl tracking-tighter leading-[0.95] text-[#0a0a0a]">
               The offer,
               <br /> unabridged.
             </h2>
@@ -211,7 +211,7 @@ export default function Careers() {
           <div className="flex items-end justify-between mb-14 gap-6">
             <div>
               <SectionLabel>Open Roles</SectionLabel>
-              <h2 className="mt-5 font-display font-black text-5xl md:text-6xl tracking-tighter leading-[0.95] text-[#0a0a0a]">
+              <h2 className="mt-5 font-display font-black text-4xl sm:text-5xl md:text-6xl tracking-tighter leading-[0.95] text-[#0a0a0a]">
                 Now hiring.
               </h2>
             </div>

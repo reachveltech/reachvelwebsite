@@ -38,7 +38,7 @@ export default function Knowledge() {
         path="/knowledge"
       />
       {/* Hero */}
-      <section className="relative overflow-hidden pt-[140px] md:pt-[180px] pb-16 md:pb-24">
+      <section className="relative overflow-hidden pt-[110px] sm:pt-[140px] md:pt-[180px] pb-16 md:pb-24">
         <div className="hero-grid absolute inset-0 opacity-50 pointer-events-none" />
         <KnowledgeAtom className="hidden lg:block absolute right-[-40px] top-[100px] h-[500px] w-[600px] opacity-85 pointer-events-none z-[5]" />
         <div className="relative mx-auto max-w-[1400px] px-5 md:px-10">
@@ -46,7 +46,7 @@ export default function Knowledge() {
             <SectionLabel>Knowledge Center</SectionLabel>
           </Reveal>
           <Reveal delay={80}>
-            <h1 className="mt-6 font-display font-black text-6xl sm:text-7xl md:text-8xl lg:text-[9.5rem] tracking-[-0.04em] leading-[0.88] text-[#0a0a0a] max-w-6xl">
+            <h1 className="mt-6 font-display font-black text-[12vw] sm:text-7xl md:text-8xl lg:text-[9.5rem] tracking-[-0.04em] leading-[0.88] text-[#0a0a0a] max-w-6xl">
               Field notes
               <br /> from the
               <br /> <span className="text-[#ff5722]">frontier.</span>

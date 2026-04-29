@@ -24,7 +24,7 @@ function MoleculeArt() {
   return (
     <svg
       viewBox="0 0 600 600"
-      className="absolute right-[-80px] top-1/2 -translate-y-1/2 h-[520px] w-[520px] lg:h-[640px] lg:w-[640px] opacity-95 pointer-events-none"
+      className="absolute right-[-40px] sm:right-[-80px] top-1/2 -translate-y-1/2 h-[360px] w-[360px] sm:h-[520px] sm:w-[520px] lg:h-[640px] lg:w-[640px] opacity-95 pointer-events-none"
       aria-hidden="true"
     >
       <defs>
@@ -199,7 +199,7 @@ export default function Home() {
             </Reveal>
 
             <Reveal delay={80}>
-              <h1 className="font-display font-black text-[14vw] sm:text-7xl lg:text-[8.2rem] leading-[0.88] tracking-[-0.04em] text-[#0a0a0a]">
+              <h1 className="font-display font-black text-[12vw] sm:text-7xl lg:text-[8.2rem] leading-[0.88] tracking-[-0.04em] text-[#0a0a0a]">
                 AI-native
                 <br />
                 <span className="relative inline-block">
@@ -239,7 +239,7 @@ export default function Home() {
             </Reveal>
           </div>
 
-          <div className="relative min-h-[500px] lg:min-h-[640px]">
+          <div className="relative min-h-[360px] sm:min-h-[480px] lg:min-h-[640px]">
             <MoleculeArt />
           </div>
         </div>
@@ -289,7 +289,7 @@ export default function Home() {
           <div className="grid lg:grid-cols-[1fr_1.4fr] gap-10 mb-16">
             <Reveal>
               <SectionLabel tone="dark">Capabilities</SectionLabel>
-              <h2 className="mt-5 font-display font-black text-5xl md:text-6xl lg:text-7xl tracking-tighter leading-[0.95]">
+              <h2 className="mt-5 font-display font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tighter leading-[0.95]">
                 Seven disciplines.
                 <br />
                 One standard.
@@ -340,11 +340,11 @@ export default function Home() {
       <section className="bg-[#f7f6f3] border-y border-black/10">
         <div className="mx-auto max-w-[1400px] grid grid-cols-2 lg:grid-cols-4 grid-tetris">
           {STATS.map((s) => (
-            <div key={s.label} className="px-6 md:px-10 py-14 md:py-20">
-              <div className="font-display font-black text-5xl md:text-6xl lg:text-7xl tracking-tighter text-[#0a0a0a] leading-none">
+            <div key={s.label} className="px-5 sm:px-6 md:px-10 py-10 sm:py-14 md:py-20">
+              <div className="font-display font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tighter text-[#0a0a0a] leading-none">
                 {s.value}
               </div>
-              <div className="mt-5 text-[11px] uppercase tracking-[0.25em] text-[#4a4a4a] font-bold">
+              <div className="mt-5 text-[10px] sm:text-[11px] uppercase tracking-[0.25em] text-[#4a4a4a] font-bold">
                 {s.label}
               </div>
             </div>
@@ -358,7 +358,7 @@ export default function Home() {
           <div className="flex items-end justify-between gap-6 mb-16">
             <div>
               <SectionLabel>Selected Projects</SectionLabel>
-              <h2 className="mt-5 font-display font-black text-5xl md:text-6xl lg:text-7xl tracking-tighter leading-[0.95] text-[#0a0a0a]">
+              <h2 className="mt-5 font-display font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tighter leading-[0.95] text-[#0a0a0a]">
                 The proof is
                 <br /> in the ship.
               </h2>
@@ -424,7 +424,7 @@ export default function Home() {
         <div className="mx-auto max-w-[1400px] px-5 md:px-10">
           <div className="max-w-3xl mb-16">
             <SectionLabel>How We Work</SectionLabel>
-            <h2 className="mt-5 font-display font-black text-5xl md:text-6xl tracking-tighter leading-[0.95] text-[#0a0a0a]">
+            <h2 className="mt-5 font-display font-black text-4xl sm:text-5xl md:text-6xl tracking-tighter leading-[0.95] text-[#0a0a0a]">
               A discipline of
               <br /> <span className="text-[#ff5722]">first principles.</span>
             </h2>
@@ -457,7 +457,7 @@ export default function Home() {
         <div className="mx-auto max-w-[1400px] px-5 md:px-10">
           <div className="mb-16">
             <SectionLabel>In Their Words</SectionLabel>
-            <h2 className="mt-5 font-display font-black text-5xl md:text-6xl tracking-tighter leading-[0.95] text-[#0a0a0a]">
+            <h2 className="mt-5 font-display font-black text-4xl sm:text-5xl md:text-6xl tracking-tighter leading-[0.95] text-[#0a0a0a]">
               What partners say after the ship date.
             </h2>
           </div>
@@ -490,7 +490,7 @@ export default function Home() {
             <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] font-bold mb-6">
               <Sparkles className="h-4 w-4" /> Next cohort · Q2 2026
             </div>
-            <h2 className="font-display font-black text-5xl md:text-7xl lg:text-8xl tracking-tighter leading-[0.92]">
+            <h2 className="font-display font-black text-4xl sm:text-5xl md:text-7xl lg:text-8xl tracking-tighter leading-[0.92]">
               Engineer the
               <br /> improbable.
             </h2>

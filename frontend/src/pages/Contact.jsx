@@ -65,14 +65,14 @@ export default function Contact() {
         path="/contact"
       />
       {/* Hero */}
-      <section className="relative overflow-hidden pt-[140px] md:pt-[180px] pb-12 md:pb-20">
+      <section className="relative overflow-hidden pt-[110px] sm:pt-[140px] md:pt-[180px] pb-12 md:pb-20">
         <div className="hero-grid absolute inset-0 opacity-50 pointer-events-none" />
         <div className="relative mx-auto max-w-[1400px] px-5 md:px-10">
           <Reveal>
             <SectionLabel>Contact · Response within 24h</SectionLabel>
           </Reveal>
           <Reveal delay={80}>
-            <h1 className="mt-6 font-display font-black text-6xl sm:text-7xl md:text-8xl lg:text-[9rem] tracking-[-0.04em] leading-[0.88] text-[#0a0a0a] max-w-6xl">
+            <h1 className="mt-6 font-display font-black text-[12vw] sm:text-7xl md:text-8xl lg:text-[9rem] tracking-[-0.04em] leading-[0.88] text-[#0a0a0a] max-w-6xl">
               Tell us
               <br />
               about the
@@ -89,7 +89,7 @@ export default function Contact() {
           {/* Form */}
           <Reveal className="relative">
             {submitted ? (
-              <div data-testid="contact-success" className="bg-[#0a0a0a] text-white p-10 md:p-14 rounded-sm min-h-[540px] flex flex-col justify-center">
+              <div data-testid="contact-success" className="bg-[#0a0a0a] text-white p-8 sm:p-10 md:p-14 rounded-sm min-h-[420px] sm:min-h-[540px] flex flex-col justify-center">
                 <div className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#ff5722] mb-4">
                   Briefing received
                 </div>

@@ -17,7 +17,7 @@ export default function Footer() {
             <p className="text-[11px] uppercase tracking-[0.3em] text-[#ff5722] font-bold mb-6">
               Let's build something remarkable
             </p>
-            <h2 className="font-display font-black text-5xl md:text-6xl lg:text-7xl tracking-tighter leading-[0.95] text-white">
+            <h2 className="font-display font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tighter leading-[0.95] text-white">
               A serious partner
               <br />
               for serious

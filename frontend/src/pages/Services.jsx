@@ -18,7 +18,7 @@ export default function Services() {
       <div className="grain fixed inset-0" />
 
       {/* Hero */}
-      <section className="relative pt-[140px] md:pt-[180px] pb-20 md:pb-24">
+      <section className="relative pt-[110px] sm:pt-[140px] md:pt-[180px] pb-20 md:pb-24">
         <div className="radial-fade-dark absolute inset-0 pointer-events-none" />
         <ServicesAtom className="hidden lg:block absolute right-[-60px] top-[60px] h-[600px] w-[600px] opacity-90 pointer-events-none z-[5]" />
         <div className="relative mx-auto max-w-[1400px] px-5 md:px-10">
@@ -26,7 +26,7 @@ export default function Services() {
             <SectionLabel tone="dark">Capabilities · 07 Disciplines</SectionLabel>
           </Reveal>
           <Reveal delay={80}>
-            <h1 className="mt-6 font-display font-black text-6xl sm:text-7xl md:text-8xl lg:text-[9.5rem] tracking-[-0.04em] leading-[0.88] max-w-6xl">
+            <h1 className="mt-6 font-display font-black text-[12vw] sm:text-7xl md:text-8xl lg:text-[9.5rem] tracking-[-0.04em] leading-[0.88] max-w-6xl">
               Technology-driven
               <br />
               solutions for
@@ -58,7 +58,7 @@ export default function Services() {
                   </span>
                   <span className="h-[1px] flex-1 bg-white/20" />
                 </div>
-                <h2 className="mt-6 font-display font-black text-5xl md:text-6xl tracking-tighter leading-[0.95]">
+                <h2 className="mt-6 font-display font-black text-4xl sm:text-5xl md:text-6xl tracking-tighter leading-[0.95]">
                   {s.title}
                 </h2>
                 <div className="mt-3 text-[#ff5722] text-sm font-medium">{s.short}</div>
@@ -115,7 +115,7 @@ export default function Services() {
         <div className="mx-auto max-w-[1400px] px-5 md:px-10">
           <div className="max-w-3xl mb-14">
             <SectionLabel tone="dark">The Engagement</SectionLabel>
-            <h2 className="mt-5 font-display font-black text-5xl md:text-6xl tracking-tighter leading-[0.95]">
+            <h2 className="mt-5 font-display font-black text-4xl sm:text-5xl md:text-6xl tracking-tighter leading-[0.95]">
               Ways to
               <br /> work with us.
             </h2>
@@ -155,7 +155,7 @@ export default function Services() {
       {/* CTA */}
       <section className="relative border-t border-white/10 py-20 md:py-28">
         <div className="mx-auto max-w-[1400px] px-5 md:px-10 grid lg:grid-cols-[1.5fr_1fr] gap-10 items-end">
-          <h2 className="font-display font-black text-5xl md:text-6xl lg:text-7xl tracking-tighter leading-[0.95]">
+          <h2 className="font-display font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tighter leading-[0.95]">
             Ready to
             <br /> <span className="text-[#ff5722]">engineer the improbable?</span>
           </h2>
