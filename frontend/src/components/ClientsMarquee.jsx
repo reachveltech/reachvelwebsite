@@ -4,7 +4,7 @@ import { fetchClientLogos } from "@/lib/api";
 
 export default function ClientsMarquee({ theme = "light" }) {
   const dark = theme === "dark";
-  const [items, setItems] = useState(null); // null = loading, [] = none yet
+  const [items, setItems] = useState(null); // null = loading
 
   useEffect(() => {
     let mounted = true;
@@ -18,8 +18,10 @@ export default function ClientsMarquee({ theme = "light" }) {
     return () => { mounted = false; };
   }, []);
 
-  // While loading or if admin hasn't added any, show static seed list
-  const list = items === null || items.length === 0 ? CLIENTS : items;
+  // Don't flash the static seed list while the API is loading.
+  // Show admin-uploaded logos when present; otherwise fall back to seed once we know.
+  if (items === null) return null;
+  const list = items.length === 0 ? CLIENTS : items;
   const all = [...list, ...list];
 
   return (
