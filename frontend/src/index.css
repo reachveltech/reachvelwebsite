@@ -70,6 +70,107 @@ code, .mono {
 }
 .animate-pulse-dot { animation: pulse-dot 1.6s ease-in-out infinite; }
 
+/* ───────────────── Atomic cursor ───────────────── */
+@media (hover: hover) and (pointer: fine) {
+    /* Hide native cursor on interactive surfaces but keep it on form fields */
+    html, body, a, button, [role="button"] {
+        cursor: none;
+    }
+    input, textarea, select, [contenteditable="true"] {
+        cursor: text;
+    }
+}
+
+.atomic-cursor-dot,
+.atomic-cursor-ring {
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 99998;
+    will-change: transform, opacity, width, height;
+    transition: opacity 200ms ease, width 220ms cubic-bezier(0.22,1,0.36,1),
+                height 220ms cubic-bezier(0.22,1,0.36,1),
+                background-color 200ms ease, border-color 200ms ease;
+}
+.atomic-cursor-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    background: #ff5722;
+    box-shadow: 0 0 12px rgba(255,87,34,0.55), 0 0 2px rgba(255,87,34,0.9);
+    z-index: 99999;
+}
+.atomic-cursor-ring {
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    border: 1px solid rgba(255,87,34,0.55);
+    background: rgba(255,87,34,0.04);
+}
+/* Hover state — over links/buttons */
+.atomic-cursor-ring[data-hover="1"] {
+    width: 56px; height: 56px;
+    border-color: rgba(255,87,34,0.9);
+    background: rgba(255,87,34,0.08);
+}
+.atomic-cursor-dot[data-hover="1"] {
+    width: 6px; height: 6px;
+}
+/* Hide entirely on form fields so users see the native caret */
+.atomic-cursor-dot[data-hide="1"],
+.atomic-cursor-ring[data-hide="1"] {
+    opacity: 0;
+}
+
+/* Trail particles */
+.atomic-cursor-trail {
+    position: fixed;
+    top: 0; left: 0;
+    width: 4px; height: 4px;
+    border-radius: 9999px;
+    background: #ff5722;
+    pointer-events: none;
+    z-index: 99997;
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow: 0 0 8px rgba(255,87,34,0.6);
+}
+
+/* Click burst — expanding ring */
+@keyframes atomic-burst {
+    0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0.9; }
+    100% { transform: translate(-50%, -50%) scale(2.4); opacity: 0; }
+}
+.atomic-cursor-burst {
+    position: fixed;
+    top: 0; left: 0;
+    width: 56px; height: 56px;
+    border-radius: 9999px;
+    border: 1.5px solid #ff5722;
+    pointer-events: none;
+    z-index: 99996;
+    animation: atomic-burst 600ms ease-out forwards;
+}
+@keyframes atomic-spark {
+    0%   { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) translate(var(--dx), var(--dy)) scale(0.3); opacity: 0; }
+}
+.atomic-cursor-spark {
+    position: fixed;
+    top: 0; left: 0;
+    width: 5px; height: 5px;
+    border-radius: 9999px;
+    background: #ff5722;
+    pointer-events: none;
+    z-index: 99996;
+    box-shadow: 0 0 6px rgba(255,87,34,0.8);
+    animation: atomic-spark 500ms cubic-bezier(0.22,1,0.36,1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atomic-cursor-trail, .atomic-cursor-burst, .atomic-cursor-spark { display: none; }
+    .atomic-cursor-dot, .atomic-cursor-ring { transition: none; }
+}
+
 @layer base {
     :root {
         --background: 45 14% 97%;
