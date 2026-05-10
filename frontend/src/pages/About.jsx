@@ -4,7 +4,7 @@ import Reveal from "@/components/Reveal";
 import SectionLabel from "@/components/SectionLabel";
 import Seo from "@/components/Seo";
 import { AboutAtom } from "@/components/AtomicArt";
-import { VALUES, STATS, LEADERSHIP } from "@/lib/data";
+import { VALUES, STATS } from "@/lib/data";
 
 export default function About() {
   return (
@@ -123,7 +123,7 @@ export default function About() {
         </div>
       </section>
 
-      {/* Leadership */}
+      {/* Leadership — hidden until real team data is ready
       <section className="bg-[#f7f6f3] py-24 md:py-32">
         <div className="mx-auto max-w-[1400px] px-5 md:px-10">
           <div className="mb-16 flex items-end justify-between gap-6">
@@ -160,6 +160,7 @@ export default function About() {
           </div>
         </div>
       </section>
+      */}
 
       {/* CTA */}
       <section className="bg-white border-t border-black/10 py-20 md:py-28">

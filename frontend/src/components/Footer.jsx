@@ -75,7 +75,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs text-white/40 font-mono uppercase tracking-wider">
-          <div>© {year} Reachvel Labs — All rights reserved.</div>
+          <div>© {year} Reachvel — All rights reserved.</div>
           <div className="flex items-center gap-5">
             <Link to="/privacy"  className="hover:text-white transition-colors" data-testid="footer-link-privacy">Privacy Policy</Link>
             <Link to="/terms"    className="hover:text-white transition-colors" data-testid="footer-link-terms">Terms of Use</Link>
