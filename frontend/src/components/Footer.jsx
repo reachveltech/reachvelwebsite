@@ -61,7 +61,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-20 pt-8 border-t border-white/10 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="mt-20 pt-8 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-6">
           {BRAND.offices.map((o) => (
             <div key={o.city}>
               <div className="font-display font-bold text-lg flex items-baseline gap-2">
@@ -76,9 +76,13 @@ export default function Footer() {
 
         <div className="mt-12 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs text-white/40 font-mono uppercase tracking-wider">
           <div>© {year} Reachvel Labs — All rights reserved.</div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#ff5722] animate-pulse-dot" />
-            Systems operational · Built with AI at the backbone
+          <div className="flex items-center gap-5">
+            <Link to="/privacy"  className="hover:text-white transition-colors" data-testid="footer-link-privacy">Privacy Policy</Link>
+            <Link to="/terms"    className="hover:text-white transition-colors" data-testid="footer-link-terms">Terms of Use</Link>
+            <span className="inline-flex items-center gap-2">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#ff5722] animate-pulse-dot" />
+              Systems operational
+            </span>
           </div>
         </div>
       </div>

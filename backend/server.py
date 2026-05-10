@@ -66,6 +66,24 @@ def slugify(value: str) -> str:
 
 
 # ───────────────── Models — Contact ─────────────────
+class AttachmentIn(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    filename: str = Field(default="", max_length=300)
+    mimetype: str = Field(default="", max_length=120)
+    size: int = 0
+    data: str = Field(default="", max_length=10_000_000)  # base64 data URL, ≤ ~7.5 MB raw
+
+
+class JobApplicationIn(BaseModel):
+    role_id: Optional[str] = Field(default="", max_length=80)
+    role_title: Optional[str] = Field(default="", max_length=200)
+    name: str = Field(min_length=1, max_length=120)
+    email: EmailStr
+    linkedin: Optional[str] = Field(default="", max_length=400)
+    note: str = Field(min_length=10, max_length=5000)
+    resume: Optional[AttachmentIn] = None
+
+
 class ContactIn(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     email: EmailStr
@@ -74,6 +92,7 @@ class ContactIn(BaseModel):
     service: Optional[str] = Field(default="", max_length=80)
     budget: Optional[str] = Field(default="", max_length=40)
     note: str = Field(min_length=10, max_length=5000)
+    attachment: Optional[AttachmentIn] = None
 
 
 class ContactSubmission(BaseModel):
@@ -326,9 +345,40 @@ async def submit_contact(payload: ContactIn):
         "status": "new",
         "created_at": now_iso(),
     }
+    if payload.attachment and payload.attachment.data:
+        sub["attachment"] = {
+            "filename": payload.attachment.filename or "attachment",
+            "mimetype": payload.attachment.mimetype or "",
+            "size": int(payload.attachment.size or 0),
+            "data": payload.attachment.data,
+        }
     await db.contact_submissions.insert_one(dict(sub))
     sub["created_at"] = datetime.fromisoformat(sub["created_at"])
     return ContactSubmission(**sub)
+
+
+@api_router.post("/applications")
+async def submit_application(payload: JobApplicationIn):
+    app_doc = {
+        "id": str(uuid.uuid4()),
+        "role_id": (payload.role_id or "").strip(),
+        "role_title": (payload.role_title or "").strip(),
+        "name": payload.name.strip(),
+        "email": str(payload.email).strip().lower(),
+        "linkedin": (payload.linkedin or "").strip(),
+        "note": payload.note.strip(),
+        "status": "new",
+        "created_at": now_iso(),
+    }
+    if payload.resume and payload.resume.data:
+        app_doc["resume"] = {
+            "filename": payload.resume.filename or "resume",
+            "mimetype": payload.resume.mimetype or "",
+            "size": int(payload.resume.size or 0),
+            "data": payload.resume.data,
+        }
+    await db.job_applications.insert_one(dict(app_doc))
+    return {"id": app_doc["id"], "ok": True}
 
 
 @api_router.get("/projects")
@@ -463,6 +513,21 @@ async def admin_stats(_: dict = Depends(require_admin)):
 @api_router.delete("/admin/submissions/{sub_id}")
 async def delete_submission(sub_id: str, _: dict = Depends(require_admin)):
     res = await db.contact_submissions.delete_one({"id": sub_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Not found")
+    return {"ok": True}
+
+
+# ───────────────── Admin — Job applications ─────────────────
+@api_router.get("/admin/applications")
+async def admin_list_applications(_: dict = Depends(require_admin)):
+    items = await db.job_applications.find({}, {"_id": 0}).sort("created_at", -1).to_list(2000)
+    return items
+
+
+@api_router.delete("/admin/applications/{aid}")
+async def admin_delete_application(aid: str, _: dict = Depends(require_admin)):
+    res = await db.job_applications.delete_one({"id": aid})
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Not found")
     return {"ok": True}

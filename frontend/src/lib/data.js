@@ -5,17 +5,16 @@ export const BRAND = {
   logo: "https://customer-assets.emergentagent.com/job_d1703749-287a-4c8e-a034-6870e45cde56/artifacts/wopxaf1q_reachvel%20logo.JPG",
   email: "info@reachvel.com",
   phone: "+91 91214 77 117",
-  address: "One Market Plaza, Suite 3600, San Francisco, CA 94105",
+  address: "Plot no 24, Mothi Nagar, Nagarjuna Hills, Punjagutta, Telangana – 500082",
   offices: [
-    { city: "San Francisco", line1: "One Market Plaza, Suite 3600", line2: "CA 94105, United States", timezone: "PST" },
-    { city: "Toronto", line1: "100 King Street West, 56th Floor", line2: "Ontario M5X 1E1, Canada", timezone: "EST" },
-    { city: "Bengaluru", line1: "UB City, Concorde Block", line2: "Karnataka 560001, India", timezone: "IST" },
+    { city: "Hyderabad", line1: "Plot no 24, Mothi Nagar, Nagarjuna Hills", line2: "Punjagutta, Telangana – 500082, India", timezone: "IST" },
+    { city: "Vijayawada", line1: "Srinivas Nagar, Benz Circle",            line2: "Andhra Pradesh – 520010, India",         timezone: "IST" },
   ],
   socials: [
-    { label: "LinkedIn", href: "#" },
-    { label: "X / Twitter", href: "#" },
-    { label: "Dribbble", href: "#" },
-    { label: "GitHub", href: "#" },
+    { label: "LinkedIn",  href: "https://www.linkedin.com/company/reachvel" },
+    { label: "Instagram", href: "https://www.instagram.com/reachvel" },
+    { label: "Facebook",  href: "https://www.facebook.com/reachvel" },
+    { label: "WhatsApp",  href: "https://wa.me/919121477117" },
   ],
 };
 
@@ -295,14 +294,14 @@ export const APPROACH = [
 ];
 
 export const ROLES = [
-  { id: "r1", title: "Senior Staff Engineer, AI Platform", dept: "Engineering", location: "San Francisco · Remote", type: "Full-time" },
+  { id: "r1", title: "Senior Staff Engineer, AI Platform", dept: "Engineering", location: "Hyderabad · Remote", type: "Full-time" },
   { id: "r2", title: "Lead Product Designer", dept: "Design", location: "Toronto · Remote", type: "Full-time" },
   { id: "r3", title: "iOS Engineer", dept: "Mobile", location: "Remote (Americas)", type: "Full-time" },
-  { id: "r4", title: "Data Engineer, Warehousing", dept: "Data", location: "Bengaluru · Hybrid", type: "Full-time" },
+  { id: "r4", title: "Data Engineer, Warehousing", dept: "Data", location: "Hyderabad · Hybrid", type: "Full-time" },
   { id: "r5", title: "ML Engineer, RAG Systems", dept: "AI", location: "Remote (EU / Americas)", type: "Full-time" },
   { id: "r6", title: "Creative Director", dept: "Brand", location: "Toronto", type: "Full-time" },
-  { id: "r7", title: "Technical Program Manager", dept: "Delivery", location: "San Francisco · Hybrid", type: "Full-time" },
-  { id: "r8", title: "Engineering Intern — Summer 2026", dept: "Engineering", location: "Bengaluru", type: "Internship" },
+  { id: "r7", title: "Technical Program Manager", dept: "Delivery", location: "Vijayawada · Hybrid", type: "Full-time" },
+  { id: "r8", title: "Engineering Intern — Summer 2026", dept: "Engineering", location: "Hyderabad", type: "Internship" },
 ];
 
 export const BENEFITS = [

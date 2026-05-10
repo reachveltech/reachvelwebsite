@@ -17,6 +17,8 @@ import Careers from "@/pages/Careers";
 import Knowledge from "@/pages/Knowledge";
 import Article from "@/pages/Article";
 import Contact from "@/pages/Contact";
+import Privacy from "@/pages/Privacy";
+import Terms from "@/pages/Terms";
 import Admin from "@/pages/Admin";
 
 function ScrollToTop() {
@@ -44,6 +46,8 @@ function Shell() {
           <Route path="/knowledge" element={<Knowledge />} />
           <Route path="/knowledge/:slug" element={<Article />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
           <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>

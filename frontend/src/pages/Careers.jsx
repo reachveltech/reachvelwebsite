@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowUpRight, MapPin, Clock, X } from "lucide-react";
 import { toast } from "sonner";
+import axios from "axios";
 import Reveal from "@/components/Reveal";
 import SectionLabel from "@/components/SectionLabel";
 import Seo from "@/components/Seo";
@@ -8,11 +9,33 @@ import { CareersAtom } from "@/components/AtomicArt";
 import { fetchRoles } from "@/lib/api";
 import { BENEFITS } from "@/lib/data";
 
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const MAX_RESUME_BYTES = 5 * 1024 * 1024; // 5 MB
+
 function RoleApplyDialog({ role, onClose }) {
   const [form, setForm] = useState({ name: "", email: "", linkedin: "", note: "" });
   const [errors, setErrors] = useState({});
+  const [resume, setResume] = useState(null); // { name, type, size, dataUrl }
+  const [busy, setBusy] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleResumePick = (e) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    if (f.size > MAX_RESUME_BYTES) {
+      toast.error(`Resume is too large (max ${(MAX_RESUME_BYTES / 1024 / 1024).toFixed(0)} MB).`);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setResume({ name: f.name, type: f.type, size: f.size, dataUrl: reader.result });
+      toast.success(`Attached ${f.name}`);
+    };
+    reader.onerror = () => toast.error("Couldn't read the file.");
+    reader.readAsDataURL(f);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = {};
     if (!form.name.trim()) errs.name = "Name required";
@@ -20,8 +43,33 @@ function RoleApplyDialog({ role, onClose }) {
     if (!form.note.trim() || form.note.length < 10) errs.note = "Tell us a bit more (10+ chars)";
     setErrors(errs);
     if (Object.keys(errs).length) return;
-    toast.success(`Application received for ${role.title}. We'll reply within 3 business days.`);
-    onClose();
+    try {
+      setBusy(true);
+      const payload = {
+        role_id: role.id,
+        role_title: role.title,
+        name: form.name.trim(),
+        email: form.email.trim(),
+        linkedin: form.linkedin.trim(),
+        note: form.note.trim(),
+      };
+      if (resume) {
+        payload.resume = {
+          filename: resume.name,
+          mimetype: resume.type,
+          size: resume.size,
+          data: resume.dataUrl,
+        };
+      }
+      await axios.post(`${API}/applications`, payload);
+      toast.success(`Application received for ${role.title}. We'll reply within 3 business days.`);
+      onClose();
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      toast.error(typeof detail === "string" ? detail : "Couldn't submit. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -93,12 +141,51 @@ function RoleApplyDialog({ role, onClose }) {
             />
             {errors.note && <div className="text-xs text-[#ff5722] mt-1">{errors.note}</div>}
           </div>
+          <div>
+            <label className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#4a4a4a]">
+              Resume / CV
+            </label>
+            <div className="mt-3">
+              <input
+                id={`resume-${role.id}`}
+                type="file"
+                accept=".pdf,.doc,.docx"
+                onChange={handleResumePick}
+                className="hidden"
+                data-testid="apply-resume-file"
+              />
+              {!resume ? (
+                <label
+                  htmlFor={`resume-${role.id}`}
+                  data-testid="apply-resume-pick"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-mono uppercase tracking-[0.15em] rounded-full border border-dashed border-black/30 text-[#4a4a4a] hover:border-[#ff5722] hover:text-[#ff5722] cursor-pointer transition-colors"
+                >
+                  <ArrowUpRight className="h-3.5 w-3.5 rotate-180" /> Attach resume (PDF / DOC)
+                </label>
+              ) : (
+                <div className="inline-flex items-center gap-3 px-4 py-2.5 bg-[#f7f6f3] border border-black/15 rounded-full text-xs">
+                  <span className="font-mono truncate max-w-[220px]" title={resume.name}>{resume.name}</span>
+                  <span className="text-[#4a4a4a]">{(resume.size / 1024).toFixed(0)} KB</span>
+                  <button
+                    type="button"
+                    onClick={() => setResume(null)}
+                    data-testid="apply-resume-remove"
+                    className="text-[#ff5722] hover:underline"
+                  >
+                    remove
+                  </button>
+                </div>
+              )}
+              <div className="mt-2 text-[10px] font-mono text-[#4a4a4a]">PDF, DOC, or DOCX — up to 5 MB.</div>
+            </div>
+          </div>
           <button
             type="submit"
             data-testid="apply-submit"
-            className="btn-primary w-full justify-center"
+            disabled={busy}
+            className="btn-primary w-full justify-center disabled:opacity-60"
           >
-            Send application <ArrowUpRight className="h-4 w-4" />
+            {busy ? "Sending…" : "Send application"} <ArrowUpRight className="h-4 w-4" />
           </button>
         </form>
       </div>

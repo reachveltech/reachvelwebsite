@@ -11,7 +11,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const SERVICES = ["Web Engineering", "Mobile Applications", "AI Automation", "Commerce", "Brand", "Data", "Not sure yet"];
-const BUDGETS = ["< $50k", "$50k – $150k", "$150k – $500k", "$500k+"];
+const MAX_DRAFT_BYTES = 5 * 1024 * 1024; // 5 MB
 
 export default function Contact() {
   const [form, setForm] = useState({
@@ -23,9 +23,27 @@ export default function Contact() {
     budget: "",
     note: "",
   });
+  const [draft, setDraft] = useState(null); // { name, type, size, dataUrl } | null
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
+
+  const handleDraftPick = (e) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    if (f.size > MAX_DRAFT_BYTES) {
+      toast.error(`File is too large (max ${(MAX_DRAFT_BYTES / 1024 / 1024).toFixed(0)} MB).`);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setDraft({ name: f.name, type: f.type, size: f.size, dataUrl: reader.result });
+      toast.success(`Attached ${f.name}`);
+    };
+    reader.onerror = () => toast.error("Couldn't read the file.");
+    reader.readAsDataURL(f);
+  };
 
   const validate = () => {
     const e = {};
@@ -46,7 +64,16 @@ export default function Contact() {
     }
     try {
       setSending(true);
-      await axios.post(`${API}/contact`, form);
+      const payload = { ...form };
+      if (draft) {
+        payload.attachment = {
+          filename: draft.name,
+          mimetype: draft.type,
+          size: draft.size,
+          data: draft.dataUrl,
+        };
+      }
+      await axios.post(`${API}/contact`, payload);
       toast.success("Briefing received. A strategist will reply within 24 hours.");
       setSubmitted(true);
     } catch (err) {
@@ -196,23 +223,43 @@ export default function Contact() {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#4a4a4a]">Budget</label>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {BUDGETS.map((b) => (
-                        <button
-                          type="button"
-                          key={b}
-                          data-testid={`contact-budget-${b.replace(/[$<>\s]/g, "").toLowerCase()}`}
-                          onClick={() => setForm({ ...form, budget: b })}
-                          className={`px-4 py-2 text-xs font-mono rounded-full border transition-colors ${
-                            form.budget === b
-                              ? "bg-[#ff5722] border-[#ff5722] text-white"
-                              : "border-black/20 text-[#4a4a4a] hover:border-[#ff5722]"
-                          }`}
+                    <label className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#4a4a4a]">
+                      Project draft (optional)
+                    </label>
+                    <div className="mt-3">
+                      <input
+                        id="contact-draft-file"
+                        type="file"
+                        accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.md,image/*"
+                        onChange={handleDraftPick}
+                        className="hidden"
+                        data-testid="contact-draft-file"
+                      />
+                      {!draft ? (
+                        <label
+                          htmlFor="contact-draft-file"
+                          data-testid="contact-draft-pick"
+                          className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-mono uppercase tracking-[0.15em] rounded-full border border-dashed border-black/30 text-[#4a4a4a] hover:border-[#ff5722] hover:text-[#ff5722] cursor-pointer transition-colors"
                         >
-                          {b}
-                        </button>
-                      ))}
+                          <ArrowUpRight className="h-3.5 w-3.5 rotate-180" /> Attach draft / brief / wireframe
+                        </label>
+                      ) : (
+                        <div className="inline-flex items-center gap-3 px-4 py-2.5 bg-white border border-black/15 rounded-full text-xs">
+                          <span className="font-mono truncate max-w-[260px]" title={draft.name}>{draft.name}</span>
+                          <span className="text-[#4a4a4a]">{(draft.size / 1024).toFixed(0)} KB</span>
+                          <button
+                            type="button"
+                            onClick={() => setDraft(null)}
+                            data-testid="contact-draft-remove"
+                            className="text-[#ff5722] hover:underline"
+                          >
+                            remove
+                          </button>
+                        </div>
+                      )}
+                      <div className="mt-2 text-[10px] font-mono text-[#4a4a4a]">
+                        PDF / DOC / PPT / image — up to 5 MB. Helps us scope faster.
+                      </div>
                     </div>
                   </div>
 
@@ -241,7 +288,7 @@ export default function Contact() {
                   {sending ? "Sending…" : "Send briefing"} <ArrowUpRight className="h-4 w-4" />
                 </button>
                 <p className="mt-4 text-xs text-[#4a4a4a] text-center">
-                  By submitting, you agree to our privacy policy. No spam, ever.
+                  By submitting, you agree to our <a href="/privacy" className="link-underline">privacy policy</a>. No spam, ever.
                 </p>
               </form>
             )}

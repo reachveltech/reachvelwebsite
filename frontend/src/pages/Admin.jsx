@@ -6,11 +6,12 @@ import {
   ArrowUpRight, LogOut, Trash2, RefreshCw, Mail, Phone, Building2, Tag, Wallet,
   MessageSquare, Search, KeyRound, X, Inbox, Briefcase, BookOpen, Users,
   LayoutDashboard, UserCircle2, Truck, FolderKanban, ListChecks, Coins, Receipt,
-  PanelLeftClose, PanelLeftOpen, Image as ImageIcon,
+  PanelLeftClose, PanelLeftOpen, Image as ImageIcon, FileText,
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import CrudPanel from "@/components/admin/CrudPanel";
 import ClientLogos from "@/components/admin/ClientLogos";
+import Applications from "@/components/admin/Applications";
 import {
   PROJECT_FIELDS, ARTICLE_FIELDS, ROLE_FIELDS,
   PROJECT_OPS, ARTICLE_OPS, ROLE_OPS,
@@ -37,6 +38,7 @@ const NAV_GROUPS = [
       { k: "projects",  label: "Projects",  icon: Briefcase },
       { k: "knowledge", label: "Knowledge", icon: BookOpen },
       { k: "careers",   label: "Careers",   icon: Users },
+      { k: "applications", label: "Applications", icon: FileText },
       { k: "client-logos", label: "Client Logos", icon: ImageIcon },
     ],
   },
@@ -416,6 +418,7 @@ export default function Admin() {
           )}
 
           {tab === "client-logos" && <ClientLogos token={token} />}
+          {tab === "applications" && <Applications token={token} />}
 
           {/* CRM */}
           {tab === "crm-analytics"         && <Analytics token={token} />}
