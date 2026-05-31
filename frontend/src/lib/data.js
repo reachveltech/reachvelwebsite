@@ -92,10 +92,10 @@ export const SERVICES = [
 ];
 
 export const STATS = [
-  { value: "1.2M+", label: "Lines of code shipped" },
+  { value: "50+", label: "AI automations built" },
   { value: "120+", label: "Projects delivered" },
   { value: "28+", label: "Industries served" },
-  { value: "14", label: "Countries" },
+  { value: "14", label: "Countries served" },
 ];
 
 export const CLIENTS = [

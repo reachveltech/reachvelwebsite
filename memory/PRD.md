@@ -45,6 +45,12 @@ Premium UI/UX for Reachvel (AI-powered Web/Mobile/Digital studio): Home, About, 
 - **Iteration 5: 100% (99/99 backend pytest + full frontend verification)** — CRM module green. GST recompute on UPDATE verified, auth-gating on all CRM endpoints verified, Analytics aggregation math verified.
 - **Iteration 6: 100% (118/118 backend pytest)** — CRM v2 spec changes verified end-to-end: new dropdowns, GST/Non-GST per record, project aggregates, sync idempotency, vibrant pills.
 
+## Recent Content Updates (Feb 2026)
+- Home hero badge: "Now accepting Q2 2026 engagements" → "Transforming Ideas into AI-Powered Reality"
+- Home chips above Live Signal: replaced with "120+ Products Delivered · 15+ Industries Served · AI-First Engineering"
+- Live Signal marquee tokens replaced with: Building · AI Agents, Shipping · Web Products, Automating · Business Workflows, Scaling · Cloud Systems, Deploying · Mobile Apps, Optimizing · Customer Experiences
+- STATS (lib/data.js) updated to: 50+ AI Automations Built, 120+ Projects Delivered, 28+ Industries Served, 14 Countries Served
+
 ## Backlog (P1/P2)
 - CSV export + date-range filters on CRM lists (leads, payments, invoices)
 - Split `backend/server.py` further into routers (auth/cms/submissions); CRM already separate

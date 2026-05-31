@@ -193,7 +193,7 @@ export default function Home() {
               <div className="flex items-center gap-2 mb-6">
                 <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-black/10 text-[11px] font-mono uppercase tracking-[0.2em] text-[#0a0a0a]">
                   <span className="h-1.5 w-1.5 rounded-full bg-[#ff5722] animate-pulse-dot" />
-                  Now accepting Q2 2026 engagements
+                  Transforming Ideas into AI-Powered Reality
                 </span>
               </div>
             </Reveal>
@@ -232,9 +232,9 @@ export default function Home() {
 
             <Reveal delay={320}>
               <div className="mt-14 flex flex-wrap items-center gap-6 md:gap-10 text-xs font-mono uppercase tracking-[0.2em] text-[#4a4a4a]">
-                <div>● 120+ products shipped</div>
-                <div>● 4.9 / 5 client rating</div>
-                <div>● SOC 2 · ISO 27001</div>
+                <div>● 120+ Products delivered</div>
+                <div>● 15+ Industries served</div>
+                <div>● AI-First Engineering</div>
               </div>
             </Reveal>
           </div>
@@ -256,16 +256,18 @@ export default function Home() {
             <div className="flex-1 overflow-hidden relative">
               <div className="flex items-center gap-10 animate-marquee whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.2em] text-[#0a0a0a]">
                 {[
-                  "Shipping · Vault iOS 4.2",
-                  "Deploying · Helix RAG v3",
-                  "Evaluating · Mira Agent",
-                  "Scaling · Atlas Warehouse",
-                  "Optimizing · Noor LCP 1.1s",
-                  "Shipping · Vault iOS 4.2",
-                  "Deploying · Helix RAG v3",
-                  "Evaluating · Mira Agent",
-                  "Scaling · Atlas Warehouse",
-                  "Optimizing · Noor LCP 1.1s",
+                  "Building · AI Agents",
+                  "Shipping · Web Products",
+                  "Automating · Business Workflows",
+                  "Scaling · Cloud Systems",
+                  "Deploying · Mobile Apps",
+                  "Optimizing · Customer Experiences",
+                  "Building · AI Agents",
+                  "Shipping · Web Products",
+                  "Automating · Business Workflows",
+                  "Scaling · Cloud Systems",
+                  "Deploying · Mobile Apps",
+                  "Optimizing · Customer Experiences",
                 ].map((x, i) => (
                   <span key={i} className="flex items-center gap-3">
                     <span className="h-1 w-1 rounded-full bg-[#ff5722]" /> {x}
