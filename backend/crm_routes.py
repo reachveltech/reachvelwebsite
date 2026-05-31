@@ -459,7 +459,17 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
 
     @r.delete("/projects/{pid}")
     async def delete_crm_project(pid: str, _: dict = Depends(require_admin_dep)):
-        return await _delete("crm_projects", pid)
+        # Verify project exists before cascading
+        res = await _db.crm_projects.delete_one({"id": pid})
+        if res.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Not found")
+        # Cascade delete all child records linked to this project
+        cascade_counts = {}
+        for coll in ("crm_tasks", "project_expenses", "vendor_payments",
+                     "project_invoices", "project_payments", "reachvel_payments"):
+            r2 = await _db[coll].delete_many({"project_id": pid})
+            cascade_counts[coll] = r2.deleted_count
+        return {"ok": True, "cascaded": cascade_counts}
 
     # ─── Tasks ───
     @r.get("/tasks")

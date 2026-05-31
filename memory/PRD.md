@@ -51,6 +51,11 @@ Premium UI/UX for Reachvel (AI-powered Web/Mobile/Digital studio): Home, About, 
 - Live Signal marquee tokens replaced with: Building · AI Agents, Shipping · Web Products, Automating · Business Workflows, Scaling · Cloud Systems, Deploying · Mobile Apps, Optimizing · Customer Experiences
 - STATS (lib/data.js) updated to: 50+ AI Automations Built, 120+ Projects Delivered, 28+ Industries Served, 14 Countries Served
 
+## CRM Cascade Delete Fix (Feb 2026)
+- Fixed `DELETE /api/admin/crm/projects/{pid}` in `crm_routes.py` to cascade-delete all child records: crm_tasks, project_expenses, vendor_payments, project_invoices, project_payments, reachvel_payments. Endpoint now returns `{ok: true, cascaded: {<collection>: <count>}}`.
+- One-time orphan cleanup script at `/app/backend/cleanup_orphans.py` (idempotent). Removed 11 orphaned records (4 expenses, 3 invoices, 2 vendor_payments, 2 project_payments) on first run, restoring CRM summary card totals to 0.
+- Verified end-to-end via curl: created project + 4 child records, deleted project, confirmed all children wiped.
+
 ## Backlog (P1/P2)
 - CSV export + date-range filters on CRM lists (leads, payments, invoices)
 - Split `backend/server.py` further into routers (auth/cms/submissions); CRM already separate
