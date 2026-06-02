@@ -82,6 +82,9 @@ class CrmProjectIn(BaseModel):
     end_date: str = Field(default="", max_length=40)
     budget: float = 0.0
     description: str = Field(default="", max_length=5000)
+    contact_person: str = Field(default="", max_length=200)
+    contact_phone: str = Field(default="", max_length=40)
+    contact_email: str = Field(default="", max_length=200)
 
 
 class TaskIn(BaseModel):
@@ -301,6 +304,9 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
             "end_date": "",
             "budget": float(lead.get("value", 0) or 0),
             "description": (lead.get("notes") or "").strip(),
+            "contact_person": lead.get("name") or "",
+            "contact_phone": lead.get("phone") or "",
+            "contact_email": lead.get("email") or "",
         }
         project = await _create("crm_projects", project_payload)
         # Mark the lead as won

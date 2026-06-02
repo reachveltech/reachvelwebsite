@@ -26,6 +26,9 @@ export default function CrmProjects({ token }) {
   const fields = useMemo(() => [
     { name: "name",          label: "Project name", type: "text", required: true, full: true, placeholder: "Vault Private Banking Platform" },
     { name: "client",        label: "Client",       type: "text", placeholder: "Vault Holdings" },
+    { name: "contact_person", label: "Primary contact person", type: "text", placeholder: "Jane Doe" },
+    { name: "contact_phone",  label: "Mobile number",          type: "text", placeholder: "+91 98765 43210" },
+    { name: "contact_email",  label: "Email ID",               type: "text", placeholder: "jane@vault.com" },
     { name: "project_group", label: "Project group", type: "select",
       options: [{ value: "", label: "— Select —" }, ...PROJECT_GROUPS.map((g) => ({ value: g.k, label: g.label }))] },
     { name: "gst_applicable", label: "GST", type: "select",
@@ -65,6 +68,19 @@ export default function CrmProjects({ token }) {
       ),
     },
     { key: "client",        label: "Client", render: (r) => r.client || "—" },
+    {
+      key: "contact_person", label: "Contact",
+      render: (r) => {
+        if (!r.contact_person && !r.contact_phone && !r.contact_email) return "—";
+        return (
+          <div className="text-xs leading-tight">
+            {r.contact_person && <div className="font-semibold text-[#0a0a0a]">{r.contact_person}</div>}
+            {r.contact_phone && <div className="font-mono text-[#4a4a4a]">{r.contact_phone}</div>}
+            {r.contact_email && <div className="text-[#4a4a4a] truncate max-w-[22ch]">{r.contact_email}</div>}
+          </div>
+        );
+      },
+    },
     { key: "project_group", label: "Group",  render: (r) => r.project_group ? <span className="px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.1em] bg-[#ff5722]/10 text-[#ff5722] rounded">{r.project_group}</span> : "—" },
     { key: "gst_applicable", label: "GST",
       render: (r) => <StatusPill tone={r.gst_applicable ? "indigo" : "zinc"} label={r.gst_applicable ? "GST" : "Non-GST"} /> },

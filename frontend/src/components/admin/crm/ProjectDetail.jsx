@@ -65,6 +65,13 @@ export default function ProjectDetail({ token, projectId }) {
           <Meta k="Start" v={fmtDate(project.start_date)} />
           <Meta k="End" v={fmtDate(project.end_date)} />
         </div>
+        {(project.contact_person || project.contact_phone || project.contact_email) && (
+          <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[#4a4a4a]">
+            {project.contact_person && <Meta k="Contact" v={project.contact_person} />}
+            {project.contact_phone && <Meta k="Mobile" v={project.contact_phone} />}
+            {project.contact_email && <Meta k="Email" v={project.contact_email} />}
+          </div>
+        )}
         {project.description && <p className="mt-4 text-[#0a0a0a] leading-relaxed">{project.description}</p>}
       </div>
 
