@@ -57,3 +57,5 @@ export const crmProjectsSummary = (t) => client.get(`${crm}/projects/summary`, a
 export const crmProjectsAggregates = (t) => client.get(`${crm}/projects/aggregates`, auth(t)).then((r) => r.data);
 export const crmReachvelSummary = (t) => client.get(`${crm}/reachvel-payments/summary`, auth(t)).then((r) => r.data);
 export const crmReachvelSync    = (t) => client.post(`${crm}/reachvel-payments/sync`, {}, auth(t)).then((r) => r.data);
+export const crmOrphansCheck    = (t) => client.get(`${crm}/orphans/check`, auth(t)).then((r) => r.data);
+export const crmOrphansCleanup  = (t) => client.post(`${crm}/orphans/cleanup`, {}, auth(t)).then((r) => r.data);

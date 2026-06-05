@@ -416,19 +416,27 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
     # ─── CRM Projects ───
     @r.get("/projects/summary")
     async def projects_summary(_: dict = Depends(require_admin_dep)):
+        """Aggregated KPIs across all CRM projects.
+        Orphan records (project_id pointing to a deleted project) are excluded
+        so totals stay truthful even before a cleanup run.
+        """
         projects = await _db.crm_projects.find({}, {"_id": 0}).to_list(5000)
         by_status = {st: 0 for st in PROJECT_STATUSES}
         for p in projects:
             by_status[p.get("status", "planning")] = by_status.get(p.get("status", "planning"), 0) + 1
         total_budget = round(sum(float(p.get("budget", 0) or 0) for p in projects), 2)
-        # All paid invoices, all expenses, all paid vendor payments → totals across all projects
-        invoices = await _db.project_invoices.find({}, {"_id": 0}).to_list(5000)
+        project_ids = {p["id"] for p in projects}
+        # Filter every child collection by membership in active project_ids
+        def _linked(items):
+            return [x for x in items if x.get("project_id") in project_ids]
+
+        invoices = _linked(await _db.project_invoices.find({}, {"_id": 0}).to_list(10000))
         invoiced = round(sum(float(i.get("total", i.get("amount", 0)) or 0) for i in invoices), 2)
-        ppays = await _db.project_payments.find({}, {"_id": 0}).to_list(5000)
+        ppays = _linked(await _db.project_payments.find({}, {"_id": 0}).to_list(10000))
         received = round(sum(float(p.get("amount", 0) or 0) for p in ppays), 2)
-        expenses = await _db.project_expenses.find({}, {"_id": 0}).to_list(5000)
+        expenses = _linked(await _db.project_expenses.find({}, {"_id": 0}).to_list(10000))
         gen_exp = round(sum(float(e.get("total", e.get("amount", 0)) or 0) for e in expenses), 2)
-        vps = await _db.vendor_payments.find({"status": "paid"}, {"_id": 0}).to_list(5000)
+        vps = _linked(await _db.vendor_payments.find({"status": "paid"}, {"_id": 0}).to_list(10000))
         ven_exp = round(sum(float(v.get("total", v.get("amount", 0)) or 0) for v in vps), 2)
         return {
             "total": len(projects),
@@ -471,6 +479,40 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
                 "status": p.get("status", "planning"),
             })
         return out
+
+    @r.get("/orphans/check")
+    async def check_orphans(_: dict = Depends(require_admin_dep)):
+        """Report orphaned child records (project_id pointing to a deleted project)."""
+        active_pids = set(await _db.crm_projects.distinct("id"))
+        report = {}
+        for coll in ("crm_tasks", "project_expenses", "vendor_payments",
+                     "project_invoices", "project_payments", "reachvel_payments"):
+            cur = _db[coll].find({}, {"_id": 0, "project_id": 1})
+            count = 0
+            async for doc in cur:
+                pid = doc.get("project_id")
+                if pid and pid not in active_pids:
+                    count += 1
+            report[coll] = count
+        report["active_projects"] = len(active_pids)
+        report["total_orphans"] = sum(v for k, v in report.items() if k not in ("active_projects", "total_orphans"))
+        return report
+
+    @r.post("/orphans/cleanup")
+    async def cleanup_orphans(_: dict = Depends(require_admin_dep)):
+        """Delete all orphaned child records (project_id of a deleted project).
+        Idempotent and safe to re-run."""
+        active_pids = await _db.crm_projects.distinct("id")
+        report = {}
+        for coll in ("crm_tasks", "project_expenses", "vendor_payments",
+                     "project_invoices", "project_payments", "reachvel_payments"):
+            res = await _db[coll].delete_many({"project_id": {"$nin": active_pids + [""]}})
+            report[coll] = res.deleted_count
+        report["total_removed"] = sum(report.values())
+        report["ok"] = True
+        return report
+
+
 
     @r.get("/projects")
     async def list_crm_projects(q: Optional[str] = None, status: Optional[str] = None,
@@ -820,12 +862,20 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
         leads = await db.leads.find({}, {"_id": 0}).to_list(5000)
         projects = await db.crm_projects.find({}, {"_id": 0}).to_list(5000)
         tasks = await db.crm_tasks.find({}, {"_id": 0}).to_list(5000)
-        invoices = await db.project_invoices.find({}, {"_id": 0}).to_list(5000)
-        project_payments = await db.project_payments.find({}, {"_id": 0}).to_list(5000)
-        expenses = await db.project_expenses.find({}, {"_id": 0}).to_list(5000)
-        vendor_payments = await db.vendor_payments.find({}, {"_id": 0}).to_list(5000)
+        invoices_all = await db.project_invoices.find({}, {"_id": 0}).to_list(5000)
+        project_payments_all = await db.project_payments.find({}, {"_id": 0}).to_list(5000)
+        expenses_all = await db.project_expenses.find({}, {"_id": 0}).to_list(5000)
+        vendor_payments_all = await db.vendor_payments.find({}, {"_id": 0}).to_list(5000)
         reachvel_payments = await db.reachvel_payments.find({}, {"_id": 0}).to_list(5000)
         vendors = await db.vendors.find({}, {"_id": 0}).to_list(5000)
+
+        # Exclude orphan records (project_id pointing to a deleted project)
+        # so totals stay truthful even before a cleanup run.
+        active_pids = {p["id"] for p in projects}
+        invoices = [x for x in invoices_all if x.get("project_id") in active_pids]
+        project_payments = [x for x in project_payments_all if x.get("project_id") in active_pids]
+        expenses = [x for x in expenses_all if x.get("project_id") in active_pids]
+        vendor_payments = [x for x in vendor_payments_all if x.get("project_id") in active_pids]
 
         def s(arr, key): return round(sum(float(x.get(key, 0) or 0) for x in arr), 2)
 

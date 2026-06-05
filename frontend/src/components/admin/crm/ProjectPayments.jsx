@@ -1,15 +1,16 @@
 import { useEffect, useState, useCallback } from "react";
-import { RefreshCw, Wallet, Receipt, ArrowUpCircle, ArrowDownCircle, TrendingUp } from "lucide-react";
+import { RefreshCw, Wallet, Receipt, ArrowUpCircle, ArrowDownCircle, TrendingUp, Eraser } from "lucide-react";
 import { toast } from "sonner";
 import SummaryCards from "./SummaryCards";
 import StatusPill from "./StatusPill";
-import { crmProjectsAggregates, crmProjectsSummary } from "@/lib/api";
+import { crmProjectsAggregates, crmProjectsSummary, crmOrphansCheck, crmOrphansCleanup } from "@/lib/api";
 import { INR, INR_PRECISE, PROJECT_STATUSES, PROJECT_STATUS_TONE } from "./crmUtils";
 
 export default function ProjectPayments({ token }) {
   const [rows, setRows] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [cleaning, setCleaning] = useState(false);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -28,6 +29,34 @@ export default function ProjectPayments({ token }) {
   }, [token]);
 
   useEffect(() => { reload(); }, [reload]);
+
+  const onCleanupOrphans = async () => {
+    setCleaning(true);
+    try {
+      const report = await crmOrphansCheck(token);
+      const total = report.total_orphans || 0;
+      if (total === 0) {
+        toast.success("No orphan records found — your books are clean.");
+        return;
+      }
+      const ok = window.confirm(
+        `Found ${total} orphan record(s) linked to deleted projects:\n` +
+        Object.entries(report)
+          .filter(([k]) => !["active_projects", "total_orphans"].includes(k))
+          .map(([k, v]) => `  • ${k}: ${v}`)
+          .join("\n") +
+        `\n\nDelete all of them? This cannot be undone.`
+      );
+      if (!ok) return;
+      const res = await crmOrphansCleanup(token);
+      toast.success(`Removed ${res.total_removed} orphan record(s).`);
+      reload();
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Cleanup failed");
+    } finally {
+      setCleaning(false);
+    }
+  };
 
   const cards = summary ? [
     { label: "Total budget",     value: INR(summary.total_budget),           icon: <Wallet className="h-3.5 w-3.5" />,        tone: "bg-blue-500" },
@@ -53,13 +82,24 @@ export default function ProjectPayments({ token }) {
             Add records inside each project's detail view.
           </p>
         </div>
-        <button
-          onClick={reload}
-          data-testid="crm-pp-refresh"
-          className="inline-flex items-center gap-2 px-4 py-2 text-xs border border-black/15 rounded-full hover:border-[#ff5722] hover:text-[#ff5722] transition-colors"
-        >
-          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onCleanupOrphans}
+            data-testid="crm-pp-cleanup-orphans"
+            disabled={cleaning}
+            title="Find and delete invoices/expenses/payments whose project was deleted."
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs border border-black/15 rounded-full hover:border-rose-500 hover:text-rose-500 transition-colors disabled:opacity-60"
+          >
+            <Eraser className={`h-4 w-4 ${cleaning ? "animate-pulse" : ""}`} /> {cleaning ? "Cleaning…" : "Cleanup orphans"}
+          </button>
+          <button
+            onClick={reload}
+            data-testid="crm-pp-refresh"
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs border border-black/15 rounded-full hover:border-[#ff5722] hover:text-[#ff5722] transition-colors"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Refresh
+          </button>
+        </div>
       </div>
 
       {summary && <SummaryCards cards={cards} />}
