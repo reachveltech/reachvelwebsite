@@ -800,15 +800,33 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
     async def update_project_payment(ppid: str, payload: ProjectPaymentIn, _: dict = Depends(require_admin_dep)):
         existing = await _db.project_payments.find_one({"id": ppid})
         if existing and existing.get("auto_synced"):
-            raise HTTPException(409, "This payment is auto-synced from a paid invoice. Change the invoice status to update it.")
+            raise HTTPException(409, "This payment is auto-synced from an invoice. Delete it and record a new payment instead.")
         return await _update("project_payments", ppid, payload.model_dump())
 
     @r.delete("/project-payments/{ppid}")
     async def delete_project_payment(ppid: str, _: dict = Depends(require_admin_dep)):
-        existing = await _db.project_payments.find_one({"id": ppid})
-        if existing and existing.get("auto_synced"):
-            raise HTTPException(409, "This payment is auto-synced from a paid invoice. Change the invoice status to remove it.")
-        return await _delete("project_payments", ppid)
+        existing = await _db.project_payments.find_one({"id": ppid}, {"_id": 0})
+        if not existing:
+            raise HTTPException(404, "Not found")
+        invoice_id = existing.get("invoice_id")
+        await _db.project_payments.delete_one({"id": ppid})
+        # If this was tied to an invoice and the invoice was marked paid, but
+        # now the cumulative paid total drops below the invoice total, revert
+        # the invoice back to "sent" so it accurately reflects the balance due.
+        if invoice_id:
+            inv = await _db.project_invoices.find_one({"id": invoice_id}, {"_id": 0})
+            if inv and inv.get("status") == "paid":
+                remaining = await _db.project_payments.find(
+                    {"invoice_id": invoice_id}, {"_id": 0, "amount": 1}
+                ).to_list(1000)
+                paid_total = round(sum(float(p.get("amount", 0) or 0) for p in remaining), 2)
+                total = float(inv.get("total", inv.get("amount", 0)) or 0)
+                if paid_total + 0.01 < total:
+                    await _db.project_invoices.update_one(
+                        {"id": invoice_id},
+                        {"$set": {"status": "sent", "paid_date": "", "updated_at": now_iso()}},
+                    )
+        return {"ok": True}
 
     # ─── Reachvel Payments (credit / debit ledger) ───
     @r.get("/reachvel-payments/summary")

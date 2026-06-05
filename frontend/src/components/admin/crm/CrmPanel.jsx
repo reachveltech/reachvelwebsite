@@ -228,7 +228,8 @@ export default function CrmPanel({
             <tbody>
               {numbered.map((it) => {
                 const guard = rowGuard?.(it);
-                const locked = !!guard?.locked;
+                const lockEdit = !!(guard?.locked || guard?.lockEdit);
+                const lockDelete = !!(guard?.locked || guard?.lockDelete);
                 return (
                 <tr
                   key={it.id}
@@ -243,31 +244,31 @@ export default function CrmPanel({
                   ))}
                   <td className="px-4 py-4 text-right whitespace-nowrap">
                     <div className="inline-flex items-center gap-2">
-                      {locked ? (
+                      {lockEdit ? (
                         <span
-                          title={guard?.reason || "Locked"}
+                          title={guard?.reason || "Edit locked"}
                           data-testid={`crm-locked-${entityName}-${it.id}`}
                           className="inline-flex items-center gap-1 px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.15em] border border-dashed border-black/15 rounded-full text-[#4a4a4a]"
                         >
-                          Locked
+                          {guard?.lockLabel || "Locked"}
                         </span>
                       ) : (
-                        <>
-                          <button
-                            onClick={() => startEdit(it)}
-                            data-testid={`crm-edit-${entityName}-${it.id}`}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs border border-black/15 rounded-full hover:border-[#ff5722] hover:text-[#ff5722]"
-                          >
-                            <Pencil className="h-3.5 w-3.5" /> Edit
-                          </button>
-                          <button
-                            onClick={() => onDelete(it)}
-                            data-testid={`crm-delete-${entityName}-${it.id}`}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs border border-black/15 rounded-full hover:border-red-500 hover:text-red-500"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </>
+                        <button
+                          onClick={() => startEdit(it)}
+                          data-testid={`crm-edit-${entityName}-${it.id}`}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs border border-black/15 rounded-full hover:border-[#ff5722] hover:text-[#ff5722]"
+                        >
+                          <Pencil className="h-3.5 w-3.5" /> Edit
+                        </button>
+                      )}
+                      {!lockDelete && (
+                        <button
+                          onClick={() => onDelete(it)}
+                          data-testid={`crm-delete-${entityName}-${it.id}`}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs border border-black/15 rounded-full hover:border-red-500 hover:text-red-500"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       )}
                     </div>
                   </td>

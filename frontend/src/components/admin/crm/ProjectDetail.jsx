@@ -448,7 +448,11 @@ function ReceivedPayments({ token, projectId }) {
       remove={(id) => crmDelete(token, "project-payments", id)}
       extraParams={{ project_id: projectId }}
       searchable={false}
-      rowGuard={(r) => r.auto_synced ? { locked: true, reason: "Auto-synced from a paid invoice. Change the invoice status to edit or remove this entry." } : null}
+      rowGuard={(r) => r.auto_synced ? {
+        lockEdit: true,
+        lockLabel: "Synced",
+        reason: "Auto-synced from a recorded invoice payment. Delete to remove it, or edit the invoice to change the amount.",
+      } : null}
     />
   );
 }
