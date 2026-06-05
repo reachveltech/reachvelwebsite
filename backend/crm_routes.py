@@ -131,6 +131,14 @@ class InvoiceIn(BaseModel):
     status: str = "draft"
     issued_date: str = Field(default="", max_length=40)
     due_date: str = Field(default="", max_length=40)
+    paid_date: str = Field(default="", max_length=40)
+    notes: str = Field(default="", max_length=2000)
+
+
+class RecordInvoicePaymentIn(BaseModel):
+    amount: float = Field(gt=0, description="Payment amount, > 0")
+    date: str = Field(default="", max_length=40)
+    method: str = Field(default="", max_length=80)
     notes: str = Field(default="", max_length=2000)
 
 
@@ -217,50 +225,53 @@ async def _list(collection_name: str, query: Optional[dict] = None, sort_key: st
 
 
 async def _sync_invoice_payment(invoice: dict) -> None:
-    """Keep a `project_payments` record in lockstep with a paid invoice.
+    """Keep `project_payments` consistent with the invoice's status.
 
-    - status == "paid":   upsert an auto-synced project_payment (matched by invoice_id).
-    - status != "paid":   remove any auto-synced project_payment for this invoice.
-    The auto-synced flag (`auto_synced=True`) lets us distinguish from manual entries.
+    - status == "paid":  top up project_payments to cover the invoice total.
+                         Existing partial recorded payments are respected.
+                         If cumulative paid < total, create a top-up entry
+                         for the remaining balance.
+    - status != "paid":  do NOT delete recorded payments. The user may have
+                         recorded partial payments; just leave them.
+
+    Each auto-created entry uses `auto_synced=True` and `source: "invoice"`.
     """
     inv_id = invoice.get("id")
     if not inv_id:
         return
-    is_paid = invoice.get("status") == "paid"
-    paid_amount = float(invoice.get("total", invoice.get("amount", 0)) or 0)
-    pay_date = invoice.get("issued_date") or (invoice.get("updated_at", "") or "")[:10]
+
+    invoice_total = float(invoice.get("total", invoice.get("amount", 0)) or 0)
+
+    # Sum of existing payments linked to this invoice
+    existing = await _db.project_payments.find(
+        {"invoice_id": inv_id}, {"_id": 0}
+    ).to_list(1000)
+    paid_so_far = round(sum(float(p.get("amount", 0) or 0) for p in existing), 2)
+
+    if invoice.get("status") != "paid":
+        # Leave any recorded payments alone (partial or otherwise)
+        return
+
+    balance = round(invoice_total - paid_so_far, 2)
+    if balance <= 0.01:
+        return  # already fully paid via recorded payments
+
+    pay_date = invoice.get("paid_date") or invoice.get("issued_date") \
+        or (invoice.get("updated_at", "") or "")[:10]
     description = (
         f"Invoice {invoice.get('invoice_number', '')}".strip()
         or invoice.get("description", "")
         or "Invoice payment"
     )
 
-    if not is_paid:
-        await _db.project_payments.delete_many({"invoice_id": inv_id, "auto_synced": True})
-        return
-
-    existing = await _db.project_payments.find_one({"invoice_id": inv_id, "auto_synced": True})
-    if existing:
-        await _db.project_payments.update_one(
-            {"id": existing["id"]},
-            {"$set": {
-                "amount": paid_amount,
-                "project_id": invoice.get("project_id", ""),
-                "date": pay_date,
-                "notes": description,
-                "updated_at": now_iso(),
-            }},
-        )
-        return
-
     doc = {
         "id": new_id(),
         "project_id": invoice.get("project_id", ""),
         "invoice_id": inv_id,
-        "amount": paid_amount,
+        "amount": balance,
         "method": "Invoice",
         "date": pay_date,
-        "notes": description,
+        "notes": description + " (auto top-up)",
         "auto_synced": True,
         "created_at": now_iso(),
         "updated_at": now_iso(),
@@ -664,6 +675,17 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
         return await _delete("vendor_payments", vpid)
 
     # ─── Project Invoices ───
+    async def _enrich_invoice(inv: dict) -> dict:
+        """Attach computed `paid_amount` and `balance` to an invoice dict."""
+        pays = await _db.project_payments.find(
+            {"invoice_id": inv["id"]}, {"_id": 0, "amount": 1}
+        ).to_list(1000)
+        paid = round(sum(float(p.get("amount", 0) or 0) for p in pays), 2)
+        total = float(inv.get("total", inv.get("amount", 0)) or 0)
+        inv["paid_amount"] = paid
+        inv["balance"] = round(max(total - paid, 0), 2)
+        return inv
+
     @r.get("/invoices")
     async def list_invoices(project_id: Optional[str] = None, status: Optional[str] = None, _: dict = Depends(require_admin_dep)):
         query = {}
@@ -671,27 +693,96 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
             query["project_id"] = project_id
         if status and status != "all":
             query["status"] = status
-        return await _list("project_invoices", query)
+        items = await _list("project_invoices", query)
+        for inv in items:
+            await _enrich_invoice(inv)
+        return items
 
     @r.post("/invoices")
     async def create_invoice(payload: InvoiceIn, _: dict = Depends(require_admin_dep)):
         if payload.status not in INVOICE_STATUSES:
             raise HTTPException(400, f"status must be one of {sorted(INVOICE_STATUSES)}")
-        inv = await _create("project_invoices", payload.model_dump())
+        data = payload.model_dump()
+        # Auto-stamp paid_date on creation if status is already paid
+        if data.get("status") == "paid" and not data.get("paid_date"):
+            data["paid_date"] = now_iso()[:10]
+        inv = await _create("project_invoices", data)
         await _sync_invoice_payment(inv)
-        return inv
+        return await _enrich_invoice(await _db.project_invoices.find_one({"id": inv["id"]}, {"_id": 0}))
 
     @r.put("/invoices/{iid}")
     async def update_invoice(iid: str, payload: InvoiceIn, _: dict = Depends(require_admin_dep)):
-        inv = await _update("project_invoices", iid, payload.model_dump())
+        existing = await _db.project_invoices.find_one({"id": iid})
+        if not existing:
+            raise HTTPException(404, "Not found")
+        data = payload.model_dump()
+        # Auto-stamp paid_date the moment status flips to paid
+        if data.get("status") == "paid" and not data.get("paid_date"):
+            data["paid_date"] = existing.get("paid_date") or now_iso()[:10]
+        # Clear paid_date if status moves away from paid
+        if data.get("status") != "paid":
+            data["paid_date"] = ""
+        inv = await _update("project_invoices", iid, data)
         await _sync_invoice_payment(inv)
-        return inv
+        return await _enrich_invoice(await _db.project_invoices.find_one({"id": iid}, {"_id": 0}))
 
     @r.delete("/invoices/{iid}")
     async def delete_invoice(iid: str, _: dict = Depends(require_admin_dep)):
-        # Remove any auto-synced project_payment linked to this invoice first
-        await _db.project_payments.delete_many({"invoice_id": iid, "auto_synced": True})
+        # Remove ALL linked project_payments (manual + auto) so they don't
+        # show up as orphans/locked rows after the parent invoice is gone.
+        await _db.project_payments.delete_many({"invoice_id": iid})
         return await _delete("project_invoices", iid)
+
+    @r.post("/invoices/{iid}/record-payment")
+    async def record_invoice_payment(iid: str, payload: RecordInvoicePaymentIn, _: dict = Depends(require_admin_dep)):
+        """Record a (partial or full) payment against an invoice.
+        Creates a `project_payments` entry tagged with this invoice and
+        auto-flips the invoice status to 'paid' once cumulative >= total.
+        """
+        inv = await _db.project_invoices.find_one({"id": iid}, {"_id": 0})
+        if not inv:
+            raise HTTPException(404, "Invoice not found")
+
+        amount = round(float(payload.amount), 2)
+        if amount <= 0:
+            raise HTTPException(400, "Payment amount must be > 0")
+
+        total = float(inv.get("total", inv.get("amount", 0)) or 0)
+        existing = await _db.project_payments.find({"invoice_id": iid}, {"_id": 0, "amount": 1}).to_list(1000)
+        paid_so_far = round(sum(float(p.get("amount", 0) or 0) for p in existing), 2)
+
+        pay_date = payload.date or now_iso()[:10]
+        description = (
+            payload.notes
+            or f"Invoice {inv.get('invoice_number', '')}".strip()
+            or "Invoice payment"
+        )
+
+        doc = {
+            "id": new_id(),
+            "project_id": inv.get("project_id", ""),
+            "invoice_id": iid,
+            "amount": amount,
+            "method": payload.method or "Recorded",
+            "date": pay_date,
+            "notes": description,
+            "auto_synced": True,
+            "created_at": now_iso(),
+            "updated_at": now_iso(),
+        }
+        await _db.project_payments.insert_one(doc)
+
+        # If cumulative >= total, auto-flip the invoice to paid
+        new_paid_total = round(paid_so_far + amount, 2)
+        invoice_updates = {"updated_at": now_iso()}
+        if new_paid_total + 0.01 >= total and inv.get("status") != "paid":
+            invoice_updates["status"] = "paid"
+            invoice_updates["paid_date"] = inv.get("paid_date") or pay_date
+        if invoice_updates:
+            await _db.project_invoices.update_one({"id": iid}, {"$set": invoice_updates})
+
+        refreshed = await _db.project_invoices.find_one({"id": iid}, {"_id": 0})
+        return await _enrich_invoice(refreshed)
 
     # ─── Project Payments (incoming from clients) ───
     @r.get("/project-payments")

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { ReceiptText, X, Save } from "lucide-react";
 import CrmPanel from "./CrmPanel";
 import StatusPill from "./StatusPill";
 import Tasks from "./Tasks";
-import { crmGet, crmList, crmCreate, crmUpdate, crmDelete } from "@/lib/api";
+import { crmGet, crmList, crmCreate, crmUpdate, crmDelete, crmRecordInvoicePayment } from "@/lib/api";
 import {
   INR, INR_PRECISE, fmtDate,
   INVOICE_STATUSES, VENDOR_PAYMENT_STATUSES,
@@ -193,6 +195,8 @@ function VendorPayments({ token, projectId, vendors, defaultGst }) {
 }
 
 function Invoices({ token, projectId, defaultGst }) {
+  const [recordingFor, setRecordingFor] = useState(null);
+
   const fields = [
     { name: "invoice_number", label: "Invoice #",     type: "text", required: true, placeholder: "INV-2026-001" },
     { name: "description",    label: "Description",   type: "text", full: true },
@@ -203,34 +207,198 @@ function Invoices({ token, projectId, defaultGst }) {
     { name: "status",         label: "Status",        type: "select", options: INVOICE_STATUSES.map((s) => ({ value: s.k, label: s.label })) },
     { name: "issued_date",    label: "Issued",        type: "date" },
     { name: "due_date",       label: "Due",           type: "date" },
+    { name: "paid_date",      label: "Paid date",     type: "date", help: "Auto-filled when status flips to Paid." },
     { name: "notes",          label: "Notes",         type: "textarea", full: true, rows: 3 },
   ];
   const columns = [
     { key: "invoice_number", label: "Invoice #",   render: (r) => <span className="font-mono font-bold">{r.invoice_number}</span> },
-    { key: "description",    label: "Description", render: (r) => r.description || "—" },
     { key: "gst_applicable", label: "GST",         render: (r) => <StatusPill tone={r.gst_applicable ? "indigo" : "zinc"} label={r.gst_applicable ? `${r.gst_pct}%` : "None"} /> },
-    { key: "amount",         label: "Subtotal",    render: (r) => <span className="font-mono">{INR_PRECISE(r.amount)}</span> },
-    { key: "gst_amount",     label: "GST amt",     render: (r) => <span className="font-mono text-[#4a4a4a]">{INR_PRECISE(r.gst_amount || 0)}</span> },
     { key: "total",          label: "Total",       render: (r) => <span className="font-mono font-bold">{INR_PRECISE(r.total ?? r.amount)}</span> },
+    { key: "paid_amount",    label: "Paid",        render: (r) => <span className="font-mono text-emerald-700">{INR_PRECISE(r.paid_amount || 0)}</span> },
+    { key: "balance",        label: "Balance",     render: (r) => {
+        const bal = r.balance ?? Math.max((r.total ?? r.amount) - (r.paid_amount || 0), 0);
+        return <span className={`font-mono ${bal > 0 ? "text-rose-700" : "text-[#4a4a4a]"}`}>{INR_PRECISE(bal)}</span>;
+      } },
     { key: "issued_date",    label: "Issued",      render: (r) => <span className="font-mono text-xs">{fmtDate(r.issued_date)}</span> },
     { key: "due_date",       label: "Due",         render: (r) => <span className="font-mono text-xs">{fmtDate(r.due_date)}</span> },
+    { key: "paid_date",      label: "Paid on",     render: (r) => <span className="font-mono text-xs text-emerald-700">{r.paid_date ? fmtDate(r.paid_date) : "—"}</span> },
     { key: "status",         label: "Status",      render: (r) => <StatusPill tone={INVOICE_TONE[r.status] || "zinc"} label={(INVOICE_STATUSES.find((s) => s.k === r.status) || INVOICE_STATUSES[0]).label} /> },
+    {
+      key: "record", label: "",
+      render: (r) => {
+        const bal = r.balance ?? Math.max((r.total ?? r.amount) - (r.paid_amount || 0), 0);
+        if (bal <= 0.01) return <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-emerald-700">Settled</span>;
+        return (
+          <button
+            onClick={(e) => { e.stopPropagation(); setRecordingFor(r); }}
+            data-testid={`invoice-record-${r.id}`}
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.15em] bg-[#ff5722]/10 text-[#ff5722] border border-[#ff5722]/30 rounded-full hover:bg-[#ff5722] hover:text-white transition-colors"
+          >
+            <ReceiptText className="h-3.5 w-3.5" /> Record
+          </button>
+        );
+      },
+    },
   ];
+
+  const triggerReload = () => {
+    window.dispatchEvent(new Event("crm-invoices-refresh"));
+    window.dispatchEvent(new Event("crm-project-payments-refresh"));
+  };
+
   return (
-    <CrmPanel
-      title="Invoices"
-      entityName="invoices"
-      fields={fields}
-      columns={columns}
-      list={(p) => crmList(token, "invoices", { ...p, project_id: projectId })}
-      create={(p) => crmCreate(token, "invoices", { ...coerceGst(p), project_id: projectId })}
-      update={(id, p) => crmUpdate(token, "invoices", id, { ...coerceGst(p), project_id: projectId })}
-      remove={(id) => crmDelete(token, "invoices", id)}
-      filters={[{ key: "status", label: "Status", options: INVOICE_STATUSES }]}
-      extraParams={{ project_id: projectId }}
-      initialForm={{ gst_applicable: defaultGst ? "true" : "false", gst_pct: 18, status: "draft" }}
-      searchable={false}
-    />
+    <>
+      <CrmPanel
+        title="Invoices"
+        entityName="invoices"
+        fields={fields}
+        columns={columns}
+        list={(p) => crmList(token, "invoices", { ...p, project_id: projectId })}
+        create={(p) => crmCreate(token, "invoices", { ...coerceGst(p), project_id: projectId })}
+        update={(id, p) => crmUpdate(token, "invoices", id, { ...coerceGst(p), project_id: projectId })}
+        remove={(id) => crmDelete(token, "invoices", id)}
+        filters={[{ key: "status", label: "Status", options: INVOICE_STATUSES }]}
+        extraParams={{ project_id: projectId }}
+        initialForm={{ gst_applicable: defaultGst ? "true" : "false", gst_pct: 18, status: "draft" }}
+        searchable={false}
+      />
+      {recordingFor && (
+        <RecordPaymentModal
+          token={token}
+          invoice={recordingFor}
+          onClose={() => setRecordingFor(null)}
+          onSuccess={() => { setRecordingFor(null); triggerReload(); }}
+        />
+      )}
+    </>
+  );
+}
+
+function RecordPaymentModal({ token, invoice, onClose, onSuccess }) {
+  const total = invoice.total ?? invoice.amount ?? 0;
+  const paid = invoice.paid_amount || 0;
+  const balance = Math.max(total - paid, 0);
+  const today = new Date().toISOString().slice(0, 10);
+
+  const [form, setForm] = useState({
+    amount: balance,
+    date: today,
+    method: "",
+    notes: "",
+  });
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    const amt = Number(form.amount);
+    if (!amt || amt <= 0) { toast.error("Enter a valid amount"); return; }
+    if (amt > balance + 0.01) {
+      if (!window.confirm(`This will record ₹${amt.toFixed(2)} which exceeds the balance of ₹${balance.toFixed(2)}. Continue?`)) return;
+    }
+    setBusy(true);
+    try {
+      await crmRecordInvoicePayment(token, invoice.id, {
+        amount: amt,
+        date: form.date,
+        method: form.method,
+        notes: form.notes,
+      });
+      toast.success(amt + balance >= total ? "Payment recorded — invoice settled." : "Partial payment recorded.");
+      onSuccess();
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Failed to record payment");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div data-testid="record-payment-modal" className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm p-0 md:p-6">
+      <div className="bg-white w-full md:max-w-md max-h-[90vh] overflow-auto rounded-t-2xl md:rounded-2xl border border-black/10 shadow-2xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-black/10">
+          <div>
+            <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#ff5722] font-bold">Record Payment</div>
+            <div className="font-bold text-[#0a0a0a] mt-0.5">{invoice.invoice_number}</div>
+          </div>
+          <button onClick={onClose} data-testid="record-payment-close" className="text-[#4a4a4a] hover:text-[#0a0a0a]"><X className="h-5 w-5" /></button>
+        </div>
+        <div className="px-5 py-4 space-y-4">
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="bg-[#f7f6f3] rounded p-2.5">
+              <div className="text-[10px] font-mono uppercase tracking-[0.15em] text-[#4a4a4a]">Total</div>
+              <div className="font-bold font-mono">{INR_PRECISE(total)}</div>
+            </div>
+            <div className="bg-emerald-50 rounded p-2.5">
+              <div className="text-[10px] font-mono uppercase tracking-[0.15em] text-emerald-700">Paid</div>
+              <div className="font-bold font-mono text-emerald-700">{INR_PRECISE(paid)}</div>
+            </div>
+            <div className="bg-rose-50 rounded p-2.5">
+              <div className="text-[10px] font-mono uppercase tracking-[0.15em] text-rose-700">Balance</div>
+              <div className="font-bold font-mono text-rose-700">{INR_PRECISE(balance)}</div>
+            </div>
+          </div>
+          <Field label="Amount received (₹)" required>
+            <input
+              type="number"
+              step="0.01"
+              data-testid="record-payment-amount"
+              value={form.amount}
+              onChange={(e) => setForm({ ...form, amount: e.target.value })}
+              className="w-full border border-black/15 rounded px-3 py-2 text-sm"
+            />
+          </Field>
+          <Field label="Payment date">
+            <input
+              type="date"
+              data-testid="record-payment-date"
+              value={form.date}
+              onChange={(e) => setForm({ ...form, date: e.target.value })}
+              className="w-full border border-black/15 rounded px-3 py-2 text-sm"
+            />
+          </Field>
+          <Field label="Method">
+            <input
+              type="text"
+              placeholder="Bank transfer · UPI · Cheque · Cash"
+              data-testid="record-payment-method"
+              value={form.method}
+              onChange={(e) => setForm({ ...form, method: e.target.value })}
+              className="w-full border border-black/15 rounded px-3 py-2 text-sm"
+            />
+          </Field>
+          <Field label="Notes">
+            <textarea
+              rows={2}
+              data-testid="record-payment-notes"
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              className="w-full border border-black/15 rounded px-3 py-2 text-sm"
+            />
+          </Field>
+        </div>
+        <div className="px-5 py-4 border-t border-black/10 flex items-center justify-end gap-2">
+          <button onClick={onClose} className="px-4 py-2 text-xs border border-black/15 rounded-full">Cancel</button>
+          <button
+            onClick={submit}
+            disabled={busy}
+            data-testid="record-payment-submit"
+            className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold uppercase tracking-[0.15em] bg-[#0a0a0a] text-white rounded-full hover:bg-[#ff5722] disabled:opacity-60"
+          >
+            <Save className="h-4 w-4" /> {busy ? "Saving…" : "Record Payment"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, required, children }) {
+  return (
+    <label className="block">
+      <span className="block text-[11px] font-mono uppercase tracking-[0.15em] text-[#4a4a4a] mb-1.5">
+        {label}{required && <span className="text-[#ff5722]"> *</span>}
+      </span>
+      {children}
+    </label>
   );
 }
 
