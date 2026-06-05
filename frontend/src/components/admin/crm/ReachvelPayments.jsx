@@ -1,11 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
-import { toast } from "sonner";
-import { RefreshCw, Wallet, ArrowUpCircle, ArrowDownCircle, TrendingUp, Sparkles } from "lucide-react";
+import { Wallet, ArrowUpCircle, ArrowDownCircle, TrendingUp } from "lucide-react";
 import CrmPanel from "./CrmPanel";
 import SummaryCards from "./SummaryCards";
 import StatusPill from "./StatusPill";
 import {
-  crmList, crmCreate, crmUpdate, crmDelete, crmReachvelSummary, crmReachvelSync,
+  crmList, crmCreate, crmUpdate, crmDelete, crmReachvelSummary,
 } from "@/lib/api";
 import {
   INR, INR_PRECISE, fmtDate, REACHVEL_PAYMENT_TYPES,
@@ -16,8 +15,6 @@ import {
 export default function ReachvelPayments({ token }) {
   const [summary, setSummary] = useState(null);
   const [projects, setProjects] = useState([]);
-  const [syncing, setSyncing] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
 
   const loadSummary = useCallback(async () => {
     try { setSummary(await crmReachvelSummary(token)); } catch { /* noop */ }
@@ -26,29 +23,9 @@ export default function ReachvelPayments({ token }) {
   useEffect(() => {
     loadSummary();
     crmList(token, "projects").then(setProjects).catch(() => {});
-  }, [token, loadSummary, reloadKey]);
+  }, [token, loadSummary]);
 
   const projectMap = Object.fromEntries(projects.map((p) => [p.id, p.name]));
-
-  const handleSync = async () => {
-    setSyncing(true);
-    try {
-      const res = await crmReachvelSync(token);
-      const total = (res.added_credits || 0) + (res.added_debits || 0);
-      if (total === 0 && (res.updated || 0) === 0) {
-        toast.success("Already up to date.");
-      } else {
-        toast.success(`Synced: +${res.added_credits} credits, +${res.added_debits} debits, ${res.updated} updated`);
-      }
-      loadSummary();
-      setReloadKey((k) => k + 1);
-      window.dispatchEvent(new CustomEvent("crm-reachvel-payments-refresh"));
-    } catch (err) {
-      toast.error(err?.response?.data?.detail || "Sync failed.");
-    } finally {
-      setSyncing(false);
-    }
-  };
 
   // Form fields — both credit & debit categories are listed with [Credit]/[Debit] prefix.
   // Selecting Type narrows visually (admin can pick any compatible category).
@@ -113,23 +90,13 @@ export default function ReachvelPayments({ token }) {
           <h2 className="mt-1 crm-h text-3xl md:text-4xl text-[#0a0a0a]">
             Company ledger
           </h2>
-          <p className="mt-2 text-sm text-[#4a4a4a]">Sync from projects + manual entries. Track every credit & debit.</p>
+          <p className="mt-2 text-sm text-[#4a4a4a]">Manual ledger entries — track every credit & debit.</p>
         </div>
-        <button
-          onClick={handleSync}
-          disabled={syncing}
-          data-testid="crm-reachvel-sync"
-          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-[0.15em] border border-[#ff5722] text-[#ff5722] rounded-full hover:bg-[#ff5722] hover:text-white transition-colors disabled:opacity-60"
-        >
-          <Sparkles className={`h-4 w-4 ${syncing ? "animate-pulse" : ""}`} /> {syncing ? "Syncing…" : "Sync Projects"}
-          <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
-        </button>
       </div>
 
       {summary && <SummaryCards cards={cards} />}
 
       <CrmPanel
-        key={reloadKey}
         title="Ledger entries"
         entityName="reachvel-payments"
         fields={fields}
