@@ -190,6 +190,11 @@ async def _update(collection_name: str, item_id: str, payload: dict) -> dict:
     if not existing:
         raise HTTPException(status_code=404, detail="Not found")
     updates = dict(payload)
+    # Defensive: never wipe an existing non-empty project_id with an empty one.
+    # (Frontend forms occasionally omit project_id on edit; preserving it stops
+    #  child records from silently becoming orphans.)
+    if not updates.get("project_id") and existing.get("project_id"):
+        updates["project_id"] = existing["project_id"]
     updates["updated_at"] = now_iso()
     if collection_name in GST_COLLECTIONS:
         _apply_gst(updates)
@@ -482,20 +487,31 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
 
     @r.get("/orphans/check")
     async def check_orphans(_: dict = Depends(require_admin_dep)):
-        """Report orphaned child records (project_id pointing to a deleted project)."""
+        """Report orphaned + unlinked child records.
+        - orphan = project_id points to a deleted project
+        - unlinked = project_id is empty (e.g. an older edit wiped the link)
+        """
         active_pids = set(await _db.crm_projects.distinct("id"))
-        report = {}
+        report = {"orphans": {}, "unlinked": {}}
         for coll in ("crm_tasks", "project_expenses", "vendor_payments",
                      "project_invoices", "project_payments", "reachvel_payments"):
             cur = _db[coll].find({}, {"_id": 0, "project_id": 1})
-            count = 0
+            orphan_n = 0
+            unlinked_n = 0
             async for doc in cur:
                 pid = doc.get("project_id")
-                if pid and pid not in active_pids:
-                    count += 1
-            report[coll] = count
+                if not pid:
+                    unlinked_n += 1
+                elif pid not in active_pids:
+                    orphan_n += 1
+            report["orphans"][coll] = orphan_n
+            report["unlinked"][coll] = unlinked_n
         report["active_projects"] = len(active_pids)
-        report["total_orphans"] = sum(v for k, v in report.items() if k not in ("active_projects", "total_orphans"))
+        report["total_orphans"] = sum(report["orphans"].values())
+        report["total_unlinked"] = sum(report["unlinked"].values())
+        # Backwards compat — keep the flat shape used by older UI builds
+        for k, v in report["orphans"].items():
+            report[k] = v
         return report
 
     @r.post("/orphans/cleanup")

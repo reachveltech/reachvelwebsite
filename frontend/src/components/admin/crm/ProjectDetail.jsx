@@ -141,7 +141,7 @@ function Expenses({ token, projectId, defaultGst }) {
       columns={columns}
       list={(p) => crmList(token, "expenses", { ...p, project_id: projectId })}
       create={(p) => crmCreate(token, "expenses", { ...coerceGst(p), project_id: projectId })}
-      update={(id, p) => crmUpdate(token, "expenses", id, coerceGst(p))}
+      update={(id, p) => crmUpdate(token, "expenses", id, { ...coerceGst(p), project_id: projectId })}
       remove={(id) => crmDelete(token, "expenses", id)}
       extraParams={{ project_id: projectId }}
       initialForm={{ gst_applicable: defaultGst ? "true" : "false", gst_pct: 18 }}
@@ -182,7 +182,7 @@ function VendorPayments({ token, projectId, vendors, defaultGst }) {
       columns={columns}
       list={(p) => crmList(token, "vendor-payments", { ...p, project_id: projectId })}
       create={(p) => crmCreate(token, "vendor-payments", { ...coerceGst(p), project_id: projectId })}
-      update={(id, p) => crmUpdate(token, "vendor-payments", id, coerceGst(p))}
+      update={(id, p) => crmUpdate(token, "vendor-payments", id, { ...coerceGst(p), project_id: projectId })}
       remove={(id) => crmDelete(token, "vendor-payments", id)}
       filters={[{ key: "status", label: "Status", options: VENDOR_PAYMENT_STATUSES }]}
       extraParams={{ project_id: projectId }}
@@ -224,7 +224,7 @@ function Invoices({ token, projectId, defaultGst }) {
       columns={columns}
       list={(p) => crmList(token, "invoices", { ...p, project_id: projectId })}
       create={(p) => crmCreate(token, "invoices", { ...coerceGst(p), project_id: projectId })}
-      update={(id, p) => crmUpdate(token, "invoices", id, coerceGst(p))}
+      update={(id, p) => crmUpdate(token, "invoices", id, { ...coerceGst(p), project_id: projectId })}
       remove={(id) => crmDelete(token, "invoices", id)}
       filters={[{ key: "status", label: "Status", options: INVOICE_STATUSES }]}
       extraParams={{ project_id: projectId }}
@@ -276,7 +276,7 @@ function ReceivedPayments({ token, projectId }) {
       columns={columns}
       list={(p) => crmList(token, "project-payments", { ...p, project_id: projectId })}
       create={(p) => crmCreate(token, "project-payments", { ...p, project_id: projectId })}
-      update={(id, p) => crmUpdate(token, "project-payments", id, p)}
+      update={(id, p) => crmUpdate(token, "project-payments", id, { ...p, project_id: projectId })}
       remove={(id) => crmDelete(token, "project-payments", id)}
       extraParams={{ project_id: projectId }}
       searchable={false}
