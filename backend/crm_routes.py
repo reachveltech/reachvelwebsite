@@ -649,10 +649,16 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
 
     @r.put("/project-payments/{ppid}")
     async def update_project_payment(ppid: str, payload: ProjectPaymentIn, _: dict = Depends(require_admin_dep)):
+        existing = await _db.project_payments.find_one({"id": ppid})
+        if existing and existing.get("auto_synced"):
+            raise HTTPException(409, "This payment is auto-synced from a paid invoice. Change the invoice status to update it.")
         return await _update("project_payments", ppid, payload.model_dump())
 
     @r.delete("/project-payments/{ppid}")
     async def delete_project_payment(ppid: str, _: dict = Depends(require_admin_dep)):
+        existing = await _db.project_payments.find_one({"id": ppid})
+        if existing and existing.get("auto_synced"):
+            raise HTTPException(409, "This payment is auto-synced from a paid invoice. Change the invoice status to remove it.")
         return await _delete("project_payments", ppid)
 
     # ─── Reachvel Payments (credit / debit ledger) ───

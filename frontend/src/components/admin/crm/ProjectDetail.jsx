@@ -248,7 +248,22 @@ function ReceivedPayments({ token, projectId }) {
     { name: "notes",       label: "Notes",          type: "textarea", full: true, rows: 3 },
   ];
   const columns = [
-    { key: "invoice_id", label: "Invoice #", render: (r) => <span className="font-mono">{invMap[r.invoice_id] || "—"}</span> },
+    {
+      key: "invoice_id", label: "Invoice #",
+      render: (r) => (
+        <span className="inline-flex items-center gap-2">
+          <span className="font-mono">{invMap[r.invoice_id] || "—"}</span>
+          {r.auto_synced && (
+            <span
+              title="Auto-synced from a paid invoice. Edits will be overwritten when the invoice changes."
+              className="px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-[0.15em] rounded bg-[#ff5722]/10 text-[#ff5722] border border-[#ff5722]/30"
+            >
+              Auto
+            </span>
+          )}
+        </span>
+      ),
+    },
     { key: "amount",     label: "Amount",    render: (r) => <span className="font-mono font-bold text-emerald-600">{INR_PRECISE(r.amount)}</span> },
     { key: "method",     label: "Method",    render: (r) => r.method || "—" },
     { key: "date",       label: "Date",      render: (r) => <span className="font-mono text-xs">{fmtDate(r.date)}</span> },
@@ -265,6 +280,7 @@ function ReceivedPayments({ token, projectId }) {
       remove={(id) => crmDelete(token, "project-payments", id)}
       extraParams={{ project_id: projectId }}
       searchable={false}
+      rowGuard={(r) => r.auto_synced ? { locked: true, reason: "Auto-synced from a paid invoice. Change the invoice status to edit or remove this entry." } : null}
     />
   );
 }
