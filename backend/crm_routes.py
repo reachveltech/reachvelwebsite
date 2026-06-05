@@ -211,6 +211,59 @@ async def _list(collection_name: str, query: Optional[dict] = None, sort_key: st
     return items
 
 
+async def _sync_invoice_payment(invoice: dict) -> None:
+    """Keep a `project_payments` record in lockstep with a paid invoice.
+
+    - status == "paid":   upsert an auto-synced project_payment (matched by invoice_id).
+    - status != "paid":   remove any auto-synced project_payment for this invoice.
+    The auto-synced flag (`auto_synced=True`) lets us distinguish from manual entries.
+    """
+    inv_id = invoice.get("id")
+    if not inv_id:
+        return
+    is_paid = invoice.get("status") == "paid"
+    paid_amount = float(invoice.get("total", invoice.get("amount", 0)) or 0)
+    pay_date = invoice.get("issued_date") or (invoice.get("updated_at", "") or "")[:10]
+    description = (
+        f"Invoice {invoice.get('invoice_number', '')}".strip()
+        or invoice.get("description", "")
+        or "Invoice payment"
+    )
+
+    if not is_paid:
+        await _db.project_payments.delete_many({"invoice_id": inv_id, "auto_synced": True})
+        return
+
+    existing = await _db.project_payments.find_one({"invoice_id": inv_id, "auto_synced": True})
+    if existing:
+        await _db.project_payments.update_one(
+            {"id": existing["id"]},
+            {"$set": {
+                "amount": paid_amount,
+                "project_id": invoice.get("project_id", ""),
+                "date": pay_date,
+                "notes": description,
+                "updated_at": now_iso(),
+            }},
+        )
+        return
+
+    doc = {
+        "id": new_id(),
+        "project_id": invoice.get("project_id", ""),
+        "invoice_id": inv_id,
+        "amount": paid_amount,
+        "method": "Invoice",
+        "date": pay_date,
+        "notes": description,
+        "auto_synced": True,
+        "created_at": now_iso(),
+        "updated_at": now_iso(),
+    }
+    await _db.project_payments.insert_one(doc)
+
+
+
 # ──────────────── Router builder ────────────────
 def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
     global _db, _require_admin
@@ -566,14 +619,20 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
     async def create_invoice(payload: InvoiceIn, _: dict = Depends(require_admin_dep)):
         if payload.status not in INVOICE_STATUSES:
             raise HTTPException(400, f"status must be one of {sorted(INVOICE_STATUSES)}")
-        return await _create("project_invoices", payload.model_dump())
+        inv = await _create("project_invoices", payload.model_dump())
+        await _sync_invoice_payment(inv)
+        return inv
 
     @r.put("/invoices/{iid}")
     async def update_invoice(iid: str, payload: InvoiceIn, _: dict = Depends(require_admin_dep)):
-        return await _update("project_invoices", iid, payload.model_dump())
+        inv = await _update("project_invoices", iid, payload.model_dump())
+        await _sync_invoice_payment(inv)
+        return inv
 
     @r.delete("/invoices/{iid}")
     async def delete_invoice(iid: str, _: dict = Depends(require_admin_dep)):
+        # Remove any auto-synced project_payment linked to this invoice first
+        await _db.project_payments.delete_many({"invoice_id": iid, "auto_synced": True})
         return await _delete("project_invoices", iid)
 
     # ─── Project Payments (incoming from clients) ───
