@@ -37,7 +37,7 @@ LEAD_STAGES = {"new", "contacted", "qualified", "proposal", "won", "lost"}
 PROJECT_STATUSES = {"planning", "in_progress", "on_hold", "completed", "cancelled"}
 TASK_STATUSES = {"todo", "in_progress", "done"}
 TASK_PRIORITIES = {"low", "medium", "high", "urgent"}
-INVOICE_STATUSES = {"draft", "sent", "paid", "overdue"}
+INVOICE_STATUSES = {"draft", "sent", "partially_paid", "paid", "overdue"}
 PAYMENT_STATUSES = {"pending", "paid"}
 REACHVEL_PAYMENT_TYPES = {"credit", "debit"}
 
@@ -772,12 +772,18 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
         }
         await _db.project_payments.insert_one(doc)
 
-        # If cumulative >= total, auto-flip the invoice to paid
+        # Auto-flip invoice status based on cumulative paid
         new_paid_total = round(paid_so_far + amount, 2)
         invoice_updates = {"updated_at": now_iso()}
-        if new_paid_total + 0.01 >= total and inv.get("status") != "paid":
-            invoice_updates["status"] = "paid"
-            invoice_updates["paid_date"] = inv.get("paid_date") or pay_date
+        if new_paid_total + 0.01 >= total:
+            # Fully paid
+            if inv.get("status") != "paid":
+                invoice_updates["status"] = "paid"
+                invoice_updates["paid_date"] = inv.get("paid_date") or pay_date
+        elif new_paid_total > 0:
+            # Partial payment recorded — mark as partially_paid (unless already paid, which shouldn't happen)
+            if inv.get("status") not in ("paid", "partially_paid"):
+                invoice_updates["status"] = "partially_paid"
         if invoice_updates:
             await _db.project_invoices.update_one({"id": iid}, {"$set": invoice_updates})
 
@@ -810,22 +816,29 @@ def build_router(db: AsyncIOMotorDatabase, require_admin_dep) -> APIRouter:
             raise HTTPException(404, "Not found")
         invoice_id = existing.get("invoice_id")
         await _db.project_payments.delete_one({"id": ppid})
-        # If this was tied to an invoice and the invoice was marked paid, but
-        # now the cumulative paid total drops below the invoice total, revert
-        # the invoice back to "sent" so it accurately reflects the balance due.
+        # Reconcile invoice status based on the new cumulative paid amount
         if invoice_id:
             inv = await _db.project_invoices.find_one({"id": invoice_id}, {"_id": 0})
-            if inv and inv.get("status") == "paid":
+            if inv:
                 remaining = await _db.project_payments.find(
                     {"invoice_id": invoice_id}, {"_id": 0, "amount": 1}
                 ).to_list(1000)
                 paid_total = round(sum(float(p.get("amount", 0) or 0) for p in remaining), 2)
                 total = float(inv.get("total", inv.get("amount", 0)) or 0)
-                if paid_total + 0.01 < total:
-                    await _db.project_invoices.update_one(
-                        {"id": invoice_id},
-                        {"$set": {"status": "sent", "paid_date": "", "updated_at": now_iso()}},
-                    )
+                updates = {}
+                if paid_total <= 0.01:
+                    # No payments left — back to "sent" if it was paid/partially_paid
+                    if inv.get("status") in ("paid", "partially_paid"):
+                        updates["status"] = "sent"
+                        updates["paid_date"] = ""
+                elif paid_total + 0.01 < total:
+                    # Still has some payments but no longer fully paid
+                    if inv.get("status") == "paid":
+                        updates["status"] = "partially_paid"
+                        updates["paid_date"] = ""
+                if updates:
+                    updates["updated_at"] = now_iso()
+                    await _db.project_invoices.update_one({"id": invoice_id}, {"$set": updates})
         return {"ok": True}
 
     # ─── Reachvel Payments (credit / debit ledger) ───

@@ -219,26 +219,26 @@ function Invoices({ token, projectId, defaultGst }) {
         const bal = r.balance ?? Math.max((r.total ?? r.amount) - (r.paid_amount || 0), 0);
         return <span className={`font-mono ${bal > 0 ? "text-rose-700" : "text-[#4a4a4a]"}`}>{INR_PRECISE(bal)}</span>;
       } },
-    { key: "issued_date",    label: "Issued",      render: (r) => <span className="font-mono text-xs">{fmtDate(r.issued_date)}</span> },
-    { key: "due_date",       label: "Due",         render: (r) => <span className="font-mono text-xs">{fmtDate(r.due_date)}</span> },
-    { key: "paid_date",      label: "Paid on",     render: (r) => <span className="font-mono text-xs text-emerald-700">{r.paid_date ? fmtDate(r.paid_date) : "—"}</span> },
-    { key: "status",         label: "Status",      render: (r) => <StatusPill tone={INVOICE_TONE[r.status] || "zinc"} label={(INVOICE_STATUSES.find((s) => s.k === r.status) || INVOICE_STATUSES[0]).label} /> },
     {
-      key: "record", label: "",
+      key: "record", label: "Payment",
       render: (r) => {
         const bal = r.balance ?? Math.max((r.total ?? r.amount) - (r.paid_amount || 0), 0);
-        if (bal <= 0.01) return <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-emerald-700">Settled</span>;
+        if (bal <= 0.01) return <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-emerald-700 font-bold">✓ Settled</span>;
         return (
           <button
             onClick={(e) => { e.stopPropagation(); setRecordingFor(r); }}
             data-testid={`invoice-record-${r.id}`}
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.15em] bg-[#ff5722]/10 text-[#ff5722] border border-[#ff5722]/30 rounded-full hover:bg-[#ff5722] hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.15em] bg-[#ff5722] text-white rounded-full hover:bg-[#0a0a0a] transition-colors shadow-sm"
           >
             <ReceiptText className="h-3.5 w-3.5" /> Record
           </button>
         );
       },
     },
+    { key: "issued_date",    label: "Issued",      render: (r) => <span className="font-mono text-xs">{fmtDate(r.issued_date)}</span> },
+    { key: "due_date",       label: "Due",         render: (r) => <span className="font-mono text-xs">{fmtDate(r.due_date)}</span> },
+    { key: "paid_date",      label: "Paid on",     render: (r) => <span className="font-mono text-xs text-emerald-700">{r.paid_date ? fmtDate(r.paid_date) : "—"}</span> },
+    { key: "status",         label: "Status",      render: (r) => <StatusPill tone={INVOICE_TONE[r.status] || "zinc"} label={(INVOICE_STATUSES.find((s) => s.k === r.status) || INVOICE_STATUSES[0]).label} /> },
   ];
 
   const triggerReload = () => {

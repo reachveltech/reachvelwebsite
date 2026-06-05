@@ -72,10 +72,11 @@ export const TASK_PRIORITIES = [
 ];
 
 export const INVOICE_STATUSES = [
-  { k: "draft",   label: "Draft",   dot: "bg-zinc-400"    },
-  { k: "sent",    label: "Sent",    dot: "bg-blue-500"    },
-  { k: "paid",    label: "Paid",    dot: "bg-emerald-500" },
-  { k: "overdue", label: "Overdue", dot: "bg-rose-500"    },
+  { k: "draft",          label: "Draft",          dot: "bg-zinc-400"    },
+  { k: "sent",           label: "Sent",           dot: "bg-blue-500"    },
+  { k: "partially_paid", label: "Partially Paid", dot: "bg-amber-500"   },
+  { k: "paid",           label: "Paid",           dot: "bg-emerald-500" },
+  { k: "overdue",        label: "Overdue",        dot: "bg-rose-500"    },
 ];
 
 export const VENDOR_PAYMENT_STATUSES = [
@@ -172,7 +173,7 @@ export const PROJECT_STATUS_TONE = {
   completed: "emerald", cancelled: "rose",
 };
 export const TASK_STATUS_TONE   = { todo: "zinc", in_progress: "blue", done: "emerald" };
-export const INVOICE_TONE       = { draft: "zinc", sent: "blue", paid: "emerald", overdue: "rose" };
+export const INVOICE_TONE       = { draft: "zinc", sent: "blue", partially_paid: "amber", paid: "emerald", overdue: "rose" };
 export const VENDOR_PAY_TONE    = { pending: "amber", paid: "emerald" };
 export const VENDOR_TONE        = { active: "emerald", inactive: "zinc" };
 export const PAYMENT_TYPE_TONE  = { credit: "emerald", debit: "rose" };
