@@ -11,6 +11,8 @@ export default function ProjectPayments({ token }) {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [cleaning, setCleaning] = useState(false);
+  // null = default (created_at desc from API), "pending-desc" = sort by total_pending
+  const [sortMode, setSortMode] = useState(null);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -58,19 +60,34 @@ export default function ProjectPayments({ token }) {
     }
   };
 
+  const togglePendingSort = () => {
+    setSortMode((m) => (m === "pending-desc" ? null : "pending-desc"));
+  };
+
   const cards = summary ? [
     { label: "Total budget",     value: INR(summary.total_budget),           icon: <Wallet className="h-3.5 w-3.5" />,        tone: "bg-blue-500" },
     { label: "Total invoiced",   value: INR(summary.total_invoiced),         icon: <Receipt className="h-3.5 w-3.5" />,       tone: "bg-indigo-500" },
     { label: "Total received",   value: INR(summary.total_received),         icon: <ArrowUpCircle className="h-3.5 w-3.5" />, tone: "bg-emerald-500", accent: "text-emerald-700" },
     { label: "Total pending",    value: INR(summary.total_pending ?? Math.max((summary.total_invoiced || 0) - (summary.total_received || 0), 0)),
       icon: <Receipt className="h-3.5 w-3.5" />,
-      tone: "bg-amber-500", accent: "text-amber-700" },
+      tone: "bg-amber-500", accent: "text-amber-700",
+      onClick: togglePendingSort,
+      active: sortMode === "pending-desc",
+    },
     { label: "General expenses", value: INR(summary.total_general_expenses), icon: <ArrowDownCircle className="h-3.5 w-3.5" />, tone: "bg-amber-500" },
     { label: "Vendor expenses",  value: INR(summary.total_vendor_expenses),  icon: <ArrowDownCircle className="h-3.5 w-3.5" />, tone: "bg-rose-500" },
     { label: "Net profit",       value: INR(summary.net_profit),             icon: <TrendingUp className="h-3.5 w-3.5" />,
       accent: summary.net_profit >= 0 ? "text-emerald-700" : "text-rose-700",
       tone: summary.net_profit >= 0 ? "bg-emerald-500" : "bg-rose-500" },
   ] : [];
+
+  const displayRows = sortMode === "pending-desc"
+    ? [...rows].sort((a, b) => {
+        const pa = a.total_pending ?? Math.max((a.total_invoiced || 0) - (a.total_received || 0), 0);
+        const pb = b.total_pending ?? Math.max((b.total_invoiced || 0) - (b.total_received || 0), 0);
+        return pb - pa;
+      })
+    : rows;
 
   return (
     <div data-testid="crm-project-payments-page">
@@ -122,7 +139,14 @@ export default function ProjectPayments({ token }) {
                 <th className="px-4 py-4 text-right">Total Budget</th>
                 <th className="px-4 py-4 text-right">Total Invoiced</th>
                 <th className="px-4 py-4 text-right">Total Received</th>
-                <th className="px-4 py-4 text-right">Total Pending</th>
+                <th
+                  className={`px-4 py-4 text-right cursor-pointer select-none transition-colors ${sortMode === "pending-desc" ? "text-[#ff5722]" : "hover:text-[#ff5722]"}`}
+                  onClick={togglePendingSort}
+                  data-testid="crm-pp-pending-header"
+                  title="Click to sort by Total Pending (desc)"
+                >
+                  Total Pending {sortMode === "pending-desc" ? "↓" : ""}
+                </th>
                 <th className="px-4 py-4 text-right">Gen. Expenses</th>
                 <th className="px-4 py-4 text-right">Vendor Expenses</th>
                 <th className="px-4 py-4 text-right">Profit</th>
@@ -130,7 +154,7 @@ export default function ProjectPayments({ token }) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r, i) => {
+              {displayRows.map((r, i) => {
                 const profitColor = r.profit >= 0 ? "text-emerald-700" : "text-rose-700";
                 const pending = r.total_pending ?? Math.max((r.total_invoiced || 0) - (r.total_received || 0), 0);
                 return (
