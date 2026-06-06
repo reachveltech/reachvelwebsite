@@ -62,6 +62,9 @@ export default function ProjectPayments({ token }) {
     { label: "Total budget",     value: INR(summary.total_budget),           icon: <Wallet className="h-3.5 w-3.5" />,        tone: "bg-blue-500" },
     { label: "Total invoiced",   value: INR(summary.total_invoiced),         icon: <Receipt className="h-3.5 w-3.5" />,       tone: "bg-indigo-500" },
     { label: "Total received",   value: INR(summary.total_received),         icon: <ArrowUpCircle className="h-3.5 w-3.5" />, tone: "bg-emerald-500", accent: "text-emerald-700" },
+    { label: "Total pending",    value: INR(summary.total_pending ?? Math.max((summary.total_invoiced || 0) - (summary.total_received || 0), 0)),
+      icon: <Receipt className="h-3.5 w-3.5" />,
+      tone: "bg-amber-500", accent: "text-amber-700" },
     { label: "General expenses", value: INR(summary.total_general_expenses), icon: <ArrowDownCircle className="h-3.5 w-3.5" />, tone: "bg-amber-500" },
     { label: "Vendor expenses",  value: INR(summary.total_vendor_expenses),  icon: <ArrowDownCircle className="h-3.5 w-3.5" />, tone: "bg-rose-500" },
     { label: "Net profit",       value: INR(summary.net_profit),             icon: <TrendingUp className="h-3.5 w-3.5" />,
@@ -119,6 +122,7 @@ export default function ProjectPayments({ token }) {
                 <th className="px-4 py-4 text-right">Total Budget</th>
                 <th className="px-4 py-4 text-right">Total Invoiced</th>
                 <th className="px-4 py-4 text-right">Total Received</th>
+                <th className="px-4 py-4 text-right">Total Pending</th>
                 <th className="px-4 py-4 text-right">Gen. Expenses</th>
                 <th className="px-4 py-4 text-right">Vendor Expenses</th>
                 <th className="px-4 py-4 text-right">Profit</th>
@@ -128,6 +132,7 @@ export default function ProjectPayments({ token }) {
             <tbody>
               {rows.map((r, i) => {
                 const profitColor = r.profit >= 0 ? "text-emerald-700" : "text-rose-700";
+                const pending = r.total_pending ?? Math.max((r.total_invoiced || 0) - (r.total_received || 0), 0);
                 return (
                   <tr key={r.id} data-testid={`crm-pp-row-${r.id}`}
                       className="border-b border-black/5 hover:bg-[#0a0a0a]/[0.02] transition-colors">
@@ -147,6 +152,7 @@ export default function ProjectPayments({ token }) {
                     <td className="px-4 py-4 text-right font-mono">{INR_PRECISE(r.total_budget)}</td>
                     <td className="px-4 py-4 text-right font-mono">{INR_PRECISE(r.total_invoiced)}</td>
                     <td className="px-4 py-4 text-right font-mono text-emerald-700">{INR_PRECISE(r.total_received)}</td>
+                    <td className={`px-4 py-4 text-right font-mono ${pending > 0 ? "text-amber-700 font-bold" : "text-[#4a4a4a]"}`} data-testid={`crm-pp-pending-${r.id}`}>{INR_PRECISE(pending)}</td>
                     <td className="px-4 py-4 text-right font-mono text-amber-700">{INR_PRECISE(r.total_general_expenses)}</td>
                     <td className="px-4 py-4 text-right font-mono text-rose-700">{INR_PRECISE(r.total_vendor_expenses)}</td>
                     <td className={`px-4 py-4 text-right font-mono font-bold ${profitColor}`}>{INR_PRECISE(r.profit)}</td>
